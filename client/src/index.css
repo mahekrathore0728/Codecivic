@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --color-navy: #193B50;
+  --color-navy-dark: #122B3B;
+  --color-teal: #287C78;
+  --color-teal-dark: #1F6360;
+  --color-gold: #D6A64F;
+  --color-gold-dark: #B58838;
+  --color-bg: #F4F7F8;
+  --color-card: #FFFFFF;
+  --color-text-primary: #253746;
+  --color-text-secondary: #64748B;
+  --color-border: #DCE5E9;
+  --color-success: #328568;
+  --color-warning: #D49A37;
+  --color-error: #C65B5B;
+}
+
+:root {
+  --color-bg-val: #F4F7F8;
+  --color-navy-val: #193B50;
+  --color-teal-val: #287C78;
+  --color-gold-val: #D6A64F;
+  --color-border-val: #DCE5E9;
+  --color-text-val: #253746;
+}
+
+body {
+  background-color: #F4F7F8;
+  color: #253746;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure Leaflet container stays within bounds and renders tiles smoothly */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.5rem;
+  z-index: 10;
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F4F7F8;
+}
+::-webkit-scrollbar-thumb {
+  background: #DCE5E9;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #BCCAD1;
+}

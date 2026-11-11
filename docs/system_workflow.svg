@@ -1,0 +1,230 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1620" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #F7F7F5; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 24px; font-weight: 700; fill: #243B53; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; fill: #4B5563; }
+      .step-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; font-weight: 600; fill: #243B53; text-anchor: middle; }
+      .desc-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11px; fill: #4B5563; text-anchor: middle; }
+      .decision-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12px; font-weight: 700; fill: #243B53; text-anchor: middle; }
+      .pill-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11px; font-weight: 700; fill: #FFFFFF; text-anchor: middle; }
+      .box { fill: #FFFFFF; stroke: #D9DEE5; stroke-width: 2; rx: 8; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.04)); }
+      .box-active { fill: #FFFFFF; stroke: #243B53; stroke-width: 2; rx: 8; }
+      .box-success { fill: #F0FDF4; stroke: #7A9E91; stroke-width: 2; rx: 8; }
+      .box-alert { fill: #FEF2F2; stroke: #DC2626; stroke-width: 2; rx: 8; }
+      .box-decision { fill: #FFFBEB; stroke: #D97706; stroke-width: 2; }
+      .line { stroke: #243B53; stroke-width: 2; fill: none; }
+      .line-dashed { stroke: #7A9E91; stroke-width: 2; stroke-dasharray: 4,4; fill: none; }
+      .arrow { fill: #243B53; }
+      .phase-tag { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; fill: #7A9E91; }
+    </style>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#243B53" />
+    </marker>
+    <marker id="arrowhead-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#7A9E91" />
+    </marker>
+    <marker id="arrowhead-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#DC2626" />
+    </marker>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1100" height="1620" class="bg" />
+
+  <!-- Header Banner -->
+  <g transform="translate(60, 40)">
+    <rect width="980" height="90" rx="10" fill="#243B53" />
+    <text x="30" y="42" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="22" font-weight="700" fill="#FFFFFF">CodeCivic: Civic Issue Reporting &amp; Resolution System</text>
+    <text x="30" y="68" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" fill="#D9DEE5">End-to-End Operational Lifecycle: Citizens, Platform Automation &amp; Municipal Authorities</text>
+  </g>
+
+  <!-- Swimlane Header Indicators -->
+  <g transform="translate(60, 150)">
+    <rect x="0" y="0" width="310" height="34" rx="6" fill="#FFFFFF" stroke="#D9DEE5" />
+    <text x="155" y="22" class="step-text" fill="#243B53">CITIZEN INTERACTION</text>
+
+    <rect x="335" y="0" width="310" height="34" rx="6" fill="#FFFFFF" stroke="#D9DEE5" />
+    <text x="490" y="22" class="step-text" fill="#243B53">PLATFORM LOGIC &amp; DB</text>
+
+    <rect x="670" y="0" width="310" height="34" rx="6" fill="#FFFFFF" stroke="#D9DEE5" />
+    <text x="825" y="22" class="step-text" fill="#243B53">MUNICIPAL AUTHORITY</text>
+  </g>
+
+  <!-- START NODE -->
+  <g transform="translate(145, 210)">
+    <rect x="0" y="0" width="140" height="40" rx="20" fill="#243B53" />
+    <text x="70" y="25" class="pill-text">START</text>
+  </g>
+
+  <!-- Step: Citizen Opens CodeCivic -->
+  <path d="M 215 250 L 215 280" class="line" marker-end="url(#arrowhead)" />
+  <g transform="translate(75, 280)">
+    <rect width="280" height="50" class="box" />
+    <text x="140" y="25" class="step-text">Citizen Opens CodeCivic Portal</text>
+    <text x="140" y="40" class="desc-text">Web / Mobile Responsive Civic Portal</text>
+  </g>
+
+  <!-- Step: Login / Register -->
+  <path d="M 215 330 L 215 360" class="line" marker-end="url(#arrowhead)" />
+  <g transform="translate(75, 360)">
+    <rect width="280" height="50" class="box" />
+    <text x="140" y="25" class="step-text">Citizen Registration / Login</text>
+    <text x="140" y="40" class="desc-text">Mobile &amp; Email Validation + Secure JWT</text>
+  </g>
+
+  <!-- Step: Select Report Issue -->
+  <path d="M 215 410 L 215 440" class="line" marker-end="url(#arrowhead)" />
+  <g transform="translate(75, 440)">
+    <rect width="280" height="50" class="box" />
+    <text x="140" y="25" class="step-text">Initiate "Report an Issue"</text>
+    <text x="140" y="40" class="desc-text">Accessible 4-Step Guided Submission Flow</text>
+  </g>
+
+  <!-- Step: Category Selection -->
+  <path d="M 215 490 L 215 520" class="line" marker-end="url(#arrowhead)" />
+  <g transform="translate(75, 520)">
+    <rect width="280" height="50" class="box" />
+    <text x="140" y="23" class="step-text">Step 1: Select Issue Category</text>
+    <text x="140" y="38" class="desc-text">Garbage, Road, Potholes, Water, Drainage, etc.</text>
+  </g>
+
+  <!-- Step: Description & Evidence -->
+  <path d="M 215 570 L 215 600" class="line" marker-end="url(#arrowhead)" />
+  <g transform="translate(75, 600)">
+    <rect width="280" height="50" class="box" />
+    <text x="140" y="23" class="step-text">Step 2: Enter Description &amp; Photos</text>
+    <text x="140" y="38" class="desc-text">Multer Validated Photographic Evidence</text>
+  </g>
+
+  <!-- Step: Select Location -->
+  <path d="M 215 650 L 215 680" class="line" marker-end="url(#arrowhead)" />
+  <g transform="translate(75, 680)">
+    <rect width="280" height="50" class="box" />
+    <text x="140" y="23" class="step-text">Step 3: Select Geolocation</text>
+    <text x="140" y="38" class="desc-text">GPS Device Pinpoint, Map Click, or Manual Address</text>
+  </g>
+
+  <!-- Step: Submit Complaint -> Cross to Platform -->
+  <path d="M 215 730 L 215 760" class="line" marker-end="url(#arrowhead)" />
+  <g transform="translate(75, 760)">
+    <rect width="280" height="46" class="box-active" />
+    <text x="140" y="28" class="step-text" fill="#243B53">Step 4: Review &amp; Submit</text>
+  </g>
+
+  <!-- Path from Citizen to Platform Logic -->
+  <path d="M 355 783 L 490 783 L 490 815" class="line" marker-end="url(#arrowhead)" />
+
+  <!-- Platform Step: Validation & Duplicate Check -->
+  <g transform="translate(350, 815)">
+    <rect width="280" height="50" class="box" />
+    <text x="140" y="23" class="step-text">System Input Validation</text>
+    <text x="140" y="38" class="desc-text">Check duplicate token overlap &amp; geo-radius</text>
+  </g>
+
+  <!-- DECISION DIAMOND: Similar Complaint Found? -->
+  <path d="M 490 865 L 490 895" class="line" marker-end="url(#arrowhead)" />
+  <g transform="translate(415, 895)">
+    <polygon points="75 0, 150 40, 75 80, 0 40" class="box-decision" />
+    <text x="75" y="37" class="decision-text">Similar</text>
+    <text x="75" y="51" class="decision-text">Complaint?</text>
+  </g>
+
+  <!-- BRANCH YES: Display Similar & Allow Support -->
+  <path d="M 415 935 L 215 935 L 215 965" class="line" marker-end="url(#arrowhead)" />
+  <text x="310" y="925" font-family="sans-serif" font-size="11" font-weight="700" fill="#D97706">YES (Score &gt;= 35%)</text>
+  <g transform="translate(75, 965)">
+    <rect width="280" height="60" class="box-success" />
+    <text x="140" y="24" class="step-text" fill="#243B53">Display Matching Complaints</text>
+    <text x="140" y="40" class="desc-text">• Citizen can support existing complaint</text>
+    <text x="140" y="52" class="desc-text">• OR proceed submitting new report</text>
+  </g>
+
+  <!-- Branch NO: Continue with new complaint -->
+  <path d="M 490 975 L 490 1020" class="line" marker-end="url(#arrowhead)" />
+  <text x="500" y="1000" font-family="sans-serif" font-size="11" font-weight="700" fill="#7A9E91">NO / PROCEED</text>
+
+  <!-- Merge from citizen proceed -->
+  <path d="M 215 1025 L 215 1045 L 350 1045" class="line" marker-end="url(#arrowhead)" />
+
+  <!-- Platform Step: Generate ID & Save Complaint -->
+  <g transform="translate(350, 1020)">
+    <rect width="280" height="52" class="box" />
+    <text x="140" y="22" class="step-text">Generate Unique Code (CC-YYYY-XXXXX)</text>
+    <text x="140" y="38" class="desc-text">Calculate SLA Deadline &amp; Advisory Priority</text>
+  </g>
+
+  <!-- Save DB & Notify Citizen -->
+  <path d="M 490 1072 L 490 1102" class="line" marker-end="url(#arrowhead)" />
+  <g transform="translate(350, 1102)">
+    <rect width="280" height="50" class="box" />
+    <text x="140" y="22" class="step-text">Commit to Persistent DB &amp; Notify</text>
+    <text x="140" y="38" class="desc-text">In-app notifications + SMS/Email dispatch</text>
+  </g>
+
+  <!-- Transition to Municipal Authority Swimlane -->
+  <path d="M 630 1127 L 825 1127 L 825 1160" class="line" marker-end="url(#arrowhead)" />
+
+  <!-- Authority: Review & Assign -->
+  <g transform="translate(685, 1160)">
+    <rect width="280" height="55" class="box" />
+    <text x="140" y="24" class="step-text">Admin Reviews Complaint</text>
+    <text x="140" y="40" class="desc-text">Assigns Department &amp; Confirms Priority</text>
+  </g>
+
+  <!-- Authority: Field Action -->
+  <path d="M 825 1215 L 825 1245" class="line" marker-end="url(#arrowhead)" />
+  <g transform="translate(685, 1245)">
+    <rect width="280" height="55" class="box" />
+    <text x="140" y="24" class="step-text">Field Department Takes Action</text>
+    <text x="140" y="40" class="desc-text">Maintenance crew fixes issue on-site</text>
+  </g>
+
+  <!-- Authority: Upload Resolution Evidence -->
+  <path d="M 825 1300 L 825 1330" class="line" marker-end="url(#arrowhead)" />
+  <g transform="translate(685, 1330)">
+    <rect width="280" height="60" class="box" />
+    <text x="140" y="23" class="step-text">Upload Resolution Evidence</text>
+    <text x="140" y="39" class="desc-text">Mandatory notes + completion photo</text>
+    <text x="140" y="52" class="desc-text">Status updated to: RESOLVED</text>
+  </g>
+
+  <!-- Cross back to Citizen for Resolution Verification -->
+  <path d="M 685 1360 L 215 1360 L 215 1395" class="line" marker-end="url(#arrowhead)" />
+  <text x="450" y="1352" font-family="sans-serif" font-size="11" font-weight="700" fill="#243B53">CITIZEN NOTIFIED FOR VERIFICATION</text>
+
+  <!-- DECISION DIAMOND: Citizen Verifies Resolution -->
+  <g transform="translate(140, 1395)">
+    <polygon points="75 0, 150 40, 75 80, 0 40" class="box-decision" />
+    <text x="75" y="37" class="decision-text">Citizen</text>
+    <text x="75" y="51" class="decision-text">Satisfied?</text>
+  </g>
+
+  <!-- RESOLVED CONFIRMED: Citizen confirms -> Close complaint -->
+  <path d="M 215 1475 L 215 1520" class="line" marker-end="url(#arrowhead-green)" />
+  <text x="225" y="1500" font-family="sans-serif" font-size="11" font-weight="700" fill="#7A9E91">CONFIRM RESOLUTION</text>
+  <g transform="translate(75, 1520)">
+    <rect width="280" height="50" class="box-success" />
+    <text x="140" y="24" class="step-text" fill="#15803D">Complaint Officially CLOSED</text>
+    <text x="140" y="40" class="desc-text">Audit recorded &amp; satisfaction registered</text>
+  </g>
+
+  <!-- NOT RESOLVED: Reopen & Return to Authority -->
+  <path d="M 290 1435 L 825 1435 L 825 1465" class="line" marker-end="url(#arrowhead-red)" />
+  <text x="450" y="1425" font-family="sans-serif" font-size="11" font-weight="700" fill="#DC2626">REPORT UNRESOLVED (Reason Provided)</text>
+  <g transform="translate(685, 1465)">
+    <rect width="280" height="55" class="box-alert" />
+    <text x="140" y="23" class="step-text" fill="#DC2626">Complaint REOPENED (High Priority)</text>
+    <text x="140" y="39" class="desc-text">Returns to Authority for Re-inspection</text>
+  </g>
+
+  <!-- Loop back from Reopen to Field Action -->
+  <path d="M 965 1492 L 985 1492 L 985 1272 L 965 1272" class="line-dashed" marker-end="url(#arrowhead)" />
+
+  <!-- END NODE -->
+  <g transform="translate(145, 1585)">
+    <rect x="0" y="0" width="140" height="30" rx="15" fill="#243B53" />
+    <text x="70" y="19" class="pill-text">END OF CYCLE</text>
+  </g>
+
+</svg>

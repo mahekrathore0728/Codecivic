@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Environment variables (contains secrets)
+.env
+.env.local
+.env.production
+
+# Database files (contain user data)
+server/codecivic.db
+server/codecivic.db-wal
+server/codecivic.db-shm
+*.db-journal
+
+# Uploaded user files
+server/uploads/
+
+# Build output
+client/dist/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
