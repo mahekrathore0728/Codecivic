@@ -226,7 +226,7 @@ export default function AdminDashboardPage({ onNavigate, activeTabProp, onTabCha
         <ShieldAlert className="w-12 h-12 text-[#C65B5B] mx-auto mb-3" />
         <h2 className="text-xl font-bold text-[#193B50]">Administrative Access Restricted</h2>
         <p className="text-xs text-[#64748B] mt-1">
-          This portal is reserved for authorized municipal officers and administrators in Kota.
+          This portal is reserved for authorized municipal officers and administrators.
         </p>
       </div>
     );
@@ -365,7 +365,7 @@ export default function AdminDashboardPage({ onNavigate, activeTabProp, onTabCha
             <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#D6A64F] text-[#193B50]">
               Municipal Console
             </span>
-            <span className="text-xs text-[#DCE5E9]">Nagar Nigam Kota Civic Directorate</span>
+            <span className="text-xs text-[#DCE5E9]">CodeCivic Governance Directorate</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">Civic Operations &amp; Grievance Management</h1>
           <p className="text-xs text-[#DCE5E9]/80">
@@ -522,7 +522,7 @@ export default function AdminDashboardPage({ onNavigate, activeTabProp, onTabCha
                     >
                       <option value="">All Complaint Records</option>
                       <option value="0">Public Citizen Reports</option>
-                      <option value="1">Kota Evaluation Demo Data</option>
+                      <option value="1">Demo Evaluation Data</option>
                     </select>
                   </div>
 
@@ -762,7 +762,7 @@ export default function AdminDashboardPage({ onNavigate, activeTabProp, onTabCha
           {activeTab === 'departments' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-sm font-bold text-[#193B50] uppercase tracking-wider">Kota Municipal Departments</h2>
+                <h2 className="text-sm font-bold text-[#193B50] uppercase tracking-wider">Municipal Departments</h2>
                 <button
                   onClick={() => setShowAddDeptModal(true)}
                   className="px-4 py-2 bg-[#193B50] text-white rounded-lg text-xs font-bold hover:bg-[#122B3B]"
@@ -803,7 +803,7 @@ export default function AdminDashboardPage({ onNavigate, activeTabProp, onTabCha
             <div className="bg-white rounded-2xl border border-[#DCE5E9] shadow-xs overflow-hidden p-6 space-y-4">
               <div>
                 <h2 className="text-sm font-bold text-[#193B50] uppercase tracking-wider">Registered Citizens Registry</h2>
-                <p className="text-xs text-[#64748B] mt-0.5">Verified resident accounts registered for civic reporting in Kota.</p>
+                <p className="text-xs text-[#64748B] mt-0.5">Verified resident accounts registered for civic reporting.</p>
               </div>
 
               <div className="overflow-x-auto">
@@ -969,7 +969,7 @@ export default function AdminDashboardPage({ onNavigate, activeTabProp, onTabCha
                   onChange={(e) => setAnalyticsFilterWard(e.target.value)}
                   className="px-2.5 py-1.5 text-xs border border-[#DCE5E9] rounded-lg bg-[#F4F7F8] text-[#253746] font-medium"
                 >
-                  <option value="">All Municipal Wards (Kota)</option>
+                  <option value="">All Municipal Wards</option>
                   <option value="Ward 14 (Aerodrome / Vigyan Nagar)">Ward 14 (Aerodrome / Vigyan Nagar)</option>
                   <option value="Ward 8 (Nayapura / MBS Hospital)">Ward 8 (Nayapura / MBS Hospital)</option>
                   <option value="Ward 22 (Talwandi / Commerce College)">Ward 22 (Talwandi / Commerce College)</option>
@@ -1056,7 +1056,7 @@ export default function AdminDashboardPage({ onNavigate, activeTabProp, onTabCha
                           Civic Insights (Automated Real-Data Observations)
                         </h3>
                         <span className="text-[10px] bg-white/15 px-2 py-0.5 rounded font-mono text-[#DCE5E9]">
-                          Nagar Nigam Kota Intelligence Engine
+                          CodeCivic Civic Intelligence Engine
                         </span>
                       </div>
 
@@ -1341,16 +1341,16 @@ export default function AdminDashboardPage({ onNavigate, activeTabProp, onTabCha
             <div className="bg-white rounded-2xl border border-[#DCE5E9] shadow-xs p-6 space-y-6">
               <div>
                 <h2 className="text-sm font-bold text-[#193B50] uppercase tracking-wider">System &amp; SLA Configuration</h2>
-                <p className="text-xs text-[#64748B] mt-0.5">Municipal operational parameters for CodeCivic Kota platform.</p>
+                <p className="text-xs text-[#64748B] mt-0.5">Municipal operational parameters for CodeCivic Pan-India platform.</p>
               </div>
 
               <div className="space-y-3 text-xs">
                 <div className="flex justify-between items-center p-3 rounded-lg border border-[#DCE5E9]">
                   <div>
                     <span className="font-bold text-[#193B50] block">Jurisdiction Focus</span>
-                    <span className="text-[#64748B]">Active operational city</span>
+                    <span className="text-[#64748B]">Operational coverage</span>
                   </div>
-                  <span className="font-bold text-[#287C78]">Kota, Rajasthan</span>
+                  <span className="font-bold text-[#287C78]">Pan-India (28 States &amp; 8 UTs)</span>
                 </div>
 
                 <div className="flex justify-between items-center p-3 rounded-lg border border-[#DCE5E9]">

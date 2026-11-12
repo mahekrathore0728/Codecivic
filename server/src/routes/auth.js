@@ -312,7 +312,7 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(503).json({
         success: false,
         code: 'EMAIL_NOT_CONFIGURED',
-        message: 'Self-service password reset is disabled because automated email delivery (SMTP) is not configured on this server. Please contact municipal support at support.kota@codecivic.gov.in or visit your local ward administration office for identity verification and account assistance.',
+        message: 'Self-service password reset is disabled because automated email delivery (SMTP) is not configured on this server. Please contact municipal support at support@codecivic.gov.in or visit your local ward administration office for identity verification and account assistance.',
       });
     }
 

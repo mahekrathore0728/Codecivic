@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 48" width="260" height="48">
+  <!-- Icon container with subtle border -->
+  <rect width="44" height="44" x="2" y="2" rx="10" fill="#254A63" stroke="#287C78" stroke-width="1.5" stroke-opacity="0.6"/>
+  <!-- Location Pin in White -->
+  <path d="M24 7 C16.8 7 11 12.8 11 20 C11 29 24 39.5 24 39.5 C24 39.5 37 29 37 20 C37 12.8 31.2 7 24 7 Z" fill="#FFFFFF"/>
+  <!-- Civic Pediment in Subtle Saffron -->
+  <path d="M24 11.5 L17.5 15.5 L30.5 15.5 Z" fill="#E07A2B"/>
+  <!-- Civic Columns -->
+  <rect x="18.5" y="17" width="2.4" height="5.5" rx="0.5" fill="#193B50"/>
+  <rect x="22.8" y="17" width="2.4" height="5.5" rx="0.5" fill="#193B50"/>
+  <rect x="27.1" y="17" width="2.4" height="5.5" rx="0.5" fill="#193B50"/>
+  <rect x="17" y="22.5" width="14" height="1.8" rx="0.4" fill="#193B50"/>
+  <!-- Resolution Checkmark in Teal -->
+  <path d="M19 28 L23 32 L30 25" fill="none" stroke="#287C78" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Wordmark: CodeCivic (White & Teal on dark) -->
+  <text x="56" y="27" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="22" fill="#FFFFFF" letter-spacing="-0.4">Code<tspan fill="#90D2CF">Civic</tspan></text>
+  <!-- Saffron Accent Dot -->
+  <circle cx="166" cy="18" r="3" fill="#E07A2B"/>
+  <!-- Tagline -->
+  <text x="57" y="40" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="8" fill="#DCE5E9" letter-spacing="0.12em">PAN-INDIA CIVIC PLATFORM</text>
+</svg>

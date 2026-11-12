@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, ShieldAlert, MapPin, Phone, Mail, ExternalLink } from 'lucide-react';
+import { Shield, MapPin, Phone, Mail, ExternalLink } from 'lucide-react';
 
 export default function Footer({ onNavigate }) {
   return (
@@ -10,13 +10,11 @@ export default function Footer({ onNavigate }) {
           {/* Column 1: Portal Brand */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center border border-white/20">
-                <ShieldAlert className="w-5 h-5 text-[#D6A64F]" />
-              </div>
+              <img src="/logo-icon.svg" alt="CodeCivic" className="w-8 h-8" />
               <span className="font-bold text-base text-white tracking-wide">CodeCivic</span>
             </div>
             <p className="text-[11px] text-[#DCE5E9]/80 leading-relaxed">
-              Crowdsourced Civic Issue Reporting and Resolution System. Enabling citizens of Kota to report, track, and verify public service improvements.
+              Pan-India Civic Issue Reporting and Resolution Platform. Connecting citizens across all 28 States and 8 Union Territories directly with their municipal authorities.
             </p>
           </div>
 
@@ -54,12 +52,12 @@ export default function Footer({ onNavigate }) {
 
           {/* Column 3: Common Categories */}
           <div className="space-y-2">
-            <h4 className="font-bold text-white uppercase text-[11px] tracking-wider">Kota Municipal Works</h4>
+            <h4 className="font-bold text-white uppercase text-[11px] tracking-wider">Civic Services</h4>
             <ul className="space-y-1.5 text-[11px] text-[#DCE5E9]/80">
-              <li>Potholes &amp; Road Remediation</li>
+              <li>Road Damage &amp; Pothole Remediation</li>
               <li>Solid Waste Clearance &amp; Dumpsters</li>
               <li>Stormwater Culverts &amp; Drainage</li>
-              <li>Chambal Pipeline Leaks &amp; Pressure</li>
+              <li>Drinking Water Pipeline Leaks &amp; Pressure</li>
               <li>Streetlight Safety &amp; Illumination</li>
               <li>Public Sanitation &amp; Hygiene</li>
             </ul>
@@ -71,15 +69,15 @@ export default function Footer({ onNavigate }) {
             <div className="space-y-1.5 text-[11px] text-[#DCE5E9]/80">
               <div className="flex items-center gap-2">
                 <Phone className="w-3.5 h-3.5 text-[#D6A64F]" />
-                <span>Toll-Free Control Room: 0744-2501000</span>
+                <span>Citizen Helpline: 1800-180-CIVIC</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-[#D6A64F]" />
-                <span>support.kota@codecivic.gov.in</span>
+                <span>support@codecivic.gov.in</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-[#D6A64F]" />
-                <span>Nagar Nigam Headquarters, Kota, Rajasthan</span>
+                <span>Pan-India Civic Redressal Network</span>
               </div>
             </div>
           </div>

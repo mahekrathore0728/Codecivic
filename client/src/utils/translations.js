@@ -5,7 +5,7 @@ export const translations = {
     // Navigation
     nav: {
       brand: 'CodeCivic',
-      subBrand: 'Kota Gov',
+      subBrand: 'Pan-India',
       tagline: 'Civic Issue Resolution System',
       home: 'Home',
       reportIssue: 'Report an Issue',
@@ -111,14 +111,14 @@ export const translations = {
     // Report Page
     report: {
       title: 'Lodge a Civic Complaint',
-      subtitle: 'Complete these simple steps with accurate details so Nagar Nigam Kota crews can promptly inspect and fix the issue.',
+      subtitle: 'Complete these steps with accurate details so the responsible municipal crew can promptly inspect and resolve the issue.',
       step1: 'Category',
       step2: 'Details & Photos',
       step3: 'Location',
       step4: 'Review & Submit',
       selectCategory: 'Select Category of Problem',
       issueTitleLabel: 'Issue Summary / Title',
-      issueTitlePlaceholder: 'e.g., Deep dangerous pothole on Jhalawar Road near circle',
+      issueTitlePlaceholder: 'e.g., Deep dangerous pothole on main transit road near circle',
       descLabel: 'Detailed Description of Problem',
       descPlaceholder: 'Describe the issue clearly. Mention if it blocks traffic, causes water pooling, poses safety hazard, etc.',
       photosLabel: 'Attach Photographic Evidence (Max 5 photos, max 10MB each)',
@@ -128,7 +128,7 @@ export const translations = {
       districtLabel: 'District',
       stateLabel: 'State',
       wardLabel: 'Municipal Ward',
-      wardPlaceholder: 'e.g. Ward 14 (Vigyan Nagar)',
+      wardPlaceholder: 'e.g. Ward / Zone (if applicable)',
       duplicateFound: 'Potential Duplicate Issues Found Nearby',
       duplicateFoundDesc: 'Neighbors have recently reported a similar problem in this immediate vicinity. You can upvote their complaint instead or continue reporting your issue.',
       submitComplaint: 'Submit Grievance Now',
@@ -138,7 +138,7 @@ export const translations = {
     // Explore Page
     explore: {
       title: 'Explore Community Grievances',
-      subtitle: 'Inspect public reports lodged by fellow residents across Kota wards. Support active complaints to elevate priority.',
+      subtitle: 'Inspect civic reports lodged by residents across India. Support active complaints to elevate priority.',
       listView: 'List View',
       mapView: 'Interactive Map View',
       searchPlaceholder: 'Search complaints by code, title, address, or landmark...',
@@ -171,8 +171,8 @@ export const translations = {
     // Transparency
     transparency: {
       title: 'Public Civic Transparency Portal',
-      subtitle: 'Real-time aggregated governance metrics for Nagar Nigam Kota. Zero personal citizen information is exposed.',
-      disclaimer: 'Note: CodeCivic is a demonstration civic technology platform for Kota municipal governance.',
+      subtitle: 'Real-time aggregated civic governance metrics across India. Zero personal citizen information is exposed.',
+      disclaimer: 'Note: CodeCivic is a demonstration civic technology platform for pan-India municipal governance.',
       totalLodged: 'Total Civic Grievances',
       totalResolved: 'Officially Resolved',
       activePending: 'Under Remediation',
@@ -189,7 +189,7 @@ export const translations = {
     // Navigation
     nav: {
       brand: 'कोडसिविक',
-      subBrand: 'कोटा नगर निगम',
+      subBrand: 'अखिल भारतीय',
       tagline: 'नागरिक समस्या समाधान एवं निवारण प्रणाली',
       home: 'होम',
       reportIssue: 'समस्या दर्ज करें',
@@ -295,14 +295,14 @@ export const translations = {
     // Report Page
     report: {
       title: 'नागरिक शिकायत दर्ज करें',
-      subtitle: 'सटीक जानकारी भरें ताकि कोटा नगर निगम की टीम तुरंत मौके पर निरीक्षण और मरम्मत कर सके।',
+      subtitle: 'सटीक जानकारी भरें ताकि संबंधित नगर निगम की टीम तुरंत मौके पर निरीक्षण और मरम्मत कर सके।',
       step1: 'श्रेणी चुनें',
       step2: 'विवरण एवं फ़ोटो',
       step3: 'स्थान / लोकेशन',
       step4: 'समीक्षा एवं सबमिट',
       selectCategory: 'समस्या की श्रेणी का चयन करें',
       issueTitleLabel: 'समस्या का शीर्षक / मुख्य बात',
-      issueTitlePlaceholder: 'उदा., झालावाड़ रोड पर एरोड्रम चौराहे के पास गहरा खतरनाक गड्ढा',
+      issueTitlePlaceholder: 'उदा., मुख्य मार्ग पर चौराहे के पास गहरा खतरनाक गड्ढा',
       descLabel: 'समस्या का विस्तृत विवरण',
       descPlaceholder: 'समस्या का स्पष्ट विवरण दें। बताएं कि क्या यह यातायात रोक रही है, जलभराव कर रही है, या सुरक्षा जोखिम है।',
       photosLabel: 'मौके की फ़ोटो साक्ष्य जोड़ें (अधिकतम 5 फ़ोटो, प्रत्येक अधिकतम 10MB)',
@@ -311,8 +311,8 @@ export const translations = {
       landmarkLabel: 'प्रमुख लैंडमार्क (पहचान स्थल)',
       districtLabel: 'जिला',
       stateLabel: 'राज्य',
-      wardLabel: 'नगर निगम वार्ड',
-      wardPlaceholder: 'उदा. वार्ड 14 (विज्ञान नगर)',
+      wardLabel: 'नगर निगम वार्ड / जोन',
+      wardPlaceholder: 'उदा. वार्ड / जोन (यदि लागू हो)',
       duplicateFound: 'आसपास पहले से दर्ज मिलती-जुलती शिकायत मिली',
       duplicateFoundDesc: 'इस स्थान के पास पहले से ऐसी शिकायत दर्ज है। आप उस शिकायत को समर्थन दे सकते हैं या अपनी नई शिकायत जारी रख सकते हैं।',
       submitComplaint: 'शिकायत सबमिट करें',
@@ -322,7 +322,7 @@ export const translations = {
     // Explore Page
     explore: {
       title: 'नागरिक समस्याएं देखें',
-      subtitle: 'कोटा के विभिन्न वार्डों से नागरिकों द्वारा दर्ज की गई समस्याएं देखें। प्राथमिकता बढ़ाने हेतु समर्थन दें।',
+      subtitle: 'भारत भर के विभिन्न वार्डों से नागरिकों द्वारा दर्ज की गई समस्याएं देखें। प्राथमिकता बढ़ाने हेतु समर्थन दें।',
       listView: 'सूची दृश्य (लिस्ट व्यू)',
       mapView: 'मानचित्र दृश्य (मैप व्यू)',
       searchPlaceholder: 'कोड, शीर्षक, पते या लैंडमार्क द्वारा खोजें...',
@@ -355,8 +355,8 @@ export const translations = {
     // Transparency
     transparency: {
       title: 'सार्वजनिक नागरिक पारदर्शिता पोर्टल',
-      subtitle: 'कोटा नगर निगम का रीयल-टाइम समेकित शासन डेटा। नागरिकों की कोई व्यक्तिगत जानकारी प्रदर्शित नहीं होती।',
-      disclaimer: 'सूचना: कोडसिविक कोटा नगर निगम के लिए एक सार्वजनिक नागरिक तकनीक मंच है।',
+      subtitle: 'अखिल भारतीय रीयल-टाइम समेकित शासन डेटा। नागरिकों की कोई व्यक्तिगत जानकारी प्रदर्शित नहीं होती।',
+      disclaimer: 'सूचना: कोडसिविक अखिल भारतीय नागरिक प्रशासन के लिए एक सार्वजनिक नागरिक तकनीक मंच है।',
       totalLodged: 'कुल प्राप्त शिकायतें',
       totalResolved: 'सफलतापूर्वक निस्तारित',
       activePending: 'वर्तमान में प्रगति पर',

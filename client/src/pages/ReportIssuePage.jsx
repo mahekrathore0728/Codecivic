@@ -73,10 +73,10 @@ export default function ReportIssuePage({ onNavigate, onOpenAuth }) {
   const [city, setCity] = useState('');
   const [pincode, setPincode] = useState('');
   const [landmark, setLandmark] = useState('');
-  const [ward, setWard] = useState(user?.district === 'Kota' ? 'Ward 14 (Vigyan Nagar)' : '');
-  const [district, setDistrict] = useState(user?.district || 'Kota');
-  const [state, setState] = useState(user?.state || 'Rajasthan');
-  const [locationCoords, setLocationCoords] = useState({ lat: 25.1800, lng: 75.8300 });
+  const [ward, setWard] = useState(user?.ward || '');
+  const [district, setDistrict] = useState(user?.district || '');
+  const [state, setState] = useState(user?.state || '');
+  const [locationCoords, setLocationCoords] = useState(user?.latitude && user?.longitude ? { lat: user.latitude, lng: user.longitude } : { lat: 20.5937, lng: 78.9629 });
   const [locationSource, setLocationSource] = useState('MAP_PIN'); // 'GPS' | 'MAP_PIN' | 'SEARCH' | 'MANUAL'
   const [locatingUser, setLocatingUser] = useState(false);
 
@@ -360,7 +360,7 @@ export default function ReportIssuePage({ onNavigate, onOpenAuth }) {
           <div className="space-y-1.5">
             <h2 className="text-2xl font-extrabold text-[#193B50]">Civic Grievance Successfully Lodged!</h2>
             <p className="text-xs text-[#64748B]">
-              Your issue has been formally recorded in Kota Municipal Corporation's system.
+              Your issue has been formally recorded with the responsible municipal authority.
             </p>
           </div>
 
@@ -488,7 +488,7 @@ export default function ReportIssuePage({ onNavigate, onOpenAuth }) {
           <div>
             <h2 className="text-lg font-bold text-[#193B50]">Step 1: Select Issue Category</h2>
             <p className="text-xs text-[#64748B] mt-1">
-              Choose the category that best matches the civic grievance you observed in Kota.
+              Choose the category that best matches the civic grievance you observed.
             </p>
           </div>
 
@@ -791,7 +791,7 @@ export default function ReportIssuePage({ onNavigate, onOpenAuth }) {
                     setCity(e.target.value);
                     setLocationSource('MANUAL');
                   }}
-                  placeholder="e.g. Kota / Jaipur / Delhi"
+                  placeholder="e.g. Mumbai / Jaipur / Delhi / Bengaluru"
                   className="w-full px-3.5 py-2.5 text-xs border border-[#DCE5E9] rounded-lg focus:outline-none focus:border-[#193B50] text-[#253746]"
                 />
               </div>
@@ -856,16 +856,16 @@ export default function ReportIssuePage({ onNavigate, onOpenAuth }) {
                 />
               </div>
 
-              {/* Municipal Ward / Zone (Optional, highlighted for Kota jurisdiction) */}
+              {/* Municipal Ward / Zone (Optional) */}
               <div>
                 <label className="block text-xs font-bold text-[#193B50] mb-1">
-                  Municipal Ward / Zone {district.toLowerCase() === 'kota' && <span className="text-[#287C78] font-normal">(Nagar Nigam Kota)</span>}
+                  Municipal Ward / Zone
                 </label>
                 <input
                   type="text"
                   value={ward}
                   onChange={(e) => setWard(e.target.value)}
-                  placeholder={district.toLowerCase() === 'kota' ? "e.g. Ward 14 (Vigyan Nagar)" : "e.g. Ward / Zone (if applicable)"}
+                  placeholder="e.g. Ward / Zone (if applicable)"
                   className="w-full px-3.5 py-2.5 text-xs border border-[#DCE5E9] rounded-lg focus:outline-none focus:border-[#193B50] text-[#253746]"
                 />
               </div>

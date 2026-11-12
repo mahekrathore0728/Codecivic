@@ -18,8 +18,8 @@ export default function HelpSupportPage({ onNavigate }) {
 
   const faqs = [
     {
-      q: 'How do I lodge a civic issue report on CodeCivic Kota?',
-      a: 'Click on "Report an Issue" in the top navigation bar. You will be guided through 4 simple steps: 1) Select the category (e.g., Potholes, Garbage, Water Leakage), 2) Write a short title and description and attach a photograph, 3) Select the location using your phone\'s GPS or click on the Kota city map, and 4) Review your information and click Submit. You will instantly receive a unique sequential Complaint ID (such as CC-2026-00001).',
+      q: 'How do I lodge a civic issue report on CodeCivic?',
+      a: 'Click on "Report an Issue" in the top navigation bar. You will be guided through 4 simple steps: 1) Select the category (e.g., Potholes, Garbage, Water Leakage), 2) Write a short title and description and attach a photograph, 3) Select the location using your phone\'s GPS or click on the map, and 4) Review your information and click Submit. You will instantly receive a unique sequential Complaint ID (such as CC-2026-00001).',
     },
     {
       q: 'Do I need an account to report a problem?',
@@ -54,7 +54,7 @@ export default function HelpSupportPage({ onNavigate }) {
         </div>
         <h1 className="text-2xl font-extrabold text-[#193B50]">Help &amp; Citizen Support Center</h1>
         <p className="text-xs text-[#64748B] leading-relaxed">
-          Learn how to submit reports in Kota, track municipal progress, understand status codes, and verify that civic repairs were properly conducted on-ground.
+          Learn how to submit civic reports, track municipal progress, understand status codes, and verify that repairs were properly conducted on-ground.
         </p>
       </div>
 
@@ -135,8 +135,8 @@ export default function HelpSupportPage({ onNavigate }) {
           <div className="p-3 bg-[#F4F7F8] rounded-xl border border-[#DCE5E9] flex items-center gap-2.5">
             <Phone className="w-4 h-4 text-[#287C78]" />
             <div>
-              <span className="text-[#64748B] block text-[10px]">Kota Municipal Control Room:</span>
-              <span className="text-[#193B50] font-bold font-mono">0744-2501000</span>
+              <span className="text-[#64748B] block text-[10px]">Citizen Civic Helpline:</span>
+              <span className="text-[#193B50] font-bold font-mono">1800-180-CIVIC</span>
             </div>
           </div>
 
@@ -144,7 +144,7 @@ export default function HelpSupportPage({ onNavigate }) {
             <Mail className="w-4 h-4 text-[#D6A64F]" />
             <div>
               <span className="text-[#64748B] block text-[10px]">Citizen Support Email:</span>
-              <span className="text-[#193B50] font-bold">support.kota@codecivic.gov.in</span>
+              <span className="text-[#193B50] font-bold">support@codecivic.gov.in</span>
             </div>
           </div>
         </div>

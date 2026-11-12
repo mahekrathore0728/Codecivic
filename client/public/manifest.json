@@ -1,7 +1,7 @@
 {
-  "name": "CodeCivic: Kota Civic Redressal",
+  "name": "CodeCivic: Pan-India Civic Governance",
   "short_name": "CodeCivic",
-  "description": "Crowdsourced Civic Issue Reporting and Resolution System for Nagar Nigam Kota, Rajasthan",
+  "description": "Pan-India Civic Issue Reporting and Resolution Platform connecting citizens with municipal authorities across all 28 States and 8 Union Territories.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F4F7F8",

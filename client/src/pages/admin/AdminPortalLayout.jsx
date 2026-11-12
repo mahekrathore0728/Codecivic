@@ -162,9 +162,7 @@ export default function AdminPortalLayout({ currentPath = '/admin/dashboard', on
               className="flex items-center gap-3 cursor-pointer select-none"
               onClick={() => handleTabChange('overview')}
             >
-              <div className="w-10 h-10 rounded-xl bg-[#287C78]/30 border border-[#287C78]/60 flex items-center justify-center shadow-inner">
-                <Shield className="w-5 h-5 text-[#D6A64F]" />
-              </div>
+              <img src="/logo-icon.svg" alt="CodeCivic" className="w-10 h-10 rounded-xl shadow-xs" />
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-extrabold text-base tracking-wide text-white">CodeCivic</span>

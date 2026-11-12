@@ -98,13 +98,13 @@ export default function ExploreIssuesPage({ onNavigate, onOpenAuth }) {
             setNearbyOnly(true);
           },
           () => {
-            // Fallback: center in Kota, Rajasthan
-            setUserCoords({ lat: 25.1800, lng: 75.8300 });
+            // Fallback: geographic center of India
+            setUserCoords({ lat: 20.5937, lng: 78.9629 });
             setNearbyOnly(true);
           }
         );
       } else {
-        setUserCoords({ lat: 25.1800, lng: 75.8300 });
+        setUserCoords({ lat: 20.5937, lng: 78.9629 });
         setNearbyOnly(true);
       }
     } else {
@@ -201,7 +201,7 @@ export default function ExploreIssuesPage({ onNavigate, onOpenAuth }) {
         <div>
           <h1 className="text-2xl font-extrabold text-[#193B50] tracking-tight">Explore Community Issues</h1>
           <p className="text-xs text-[#64748B] mt-0.5">
-            Discover verified public complaints in Kota, Rajasthan • Lend community support and track resolution.
+            Discover verified civic complaints from citizens across India • Lend community support and track resolution.
           </p>
         </div>
 

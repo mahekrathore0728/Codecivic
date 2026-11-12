@@ -1,6 +1,6 @@
-# CodeCivic: Crowdsourced Civic Issue Reporting and Resolution System
+# CodeCivic: Pan-India Civic Issue Reporting and Resolution Platform
 
-**CodeCivic** is an enterprise-grade civic technology platform developed for public grievance redressal and participatory urban governance, with primary geographic deployment for **Nagar Nigam Kota, Rajasthan, India**.
+**CodeCivic** is an enterprise-grade civic technology platform developed for public grievance redressal and participatory urban governance across all **28 States and 8 Union Territories of India**.
 
 It empowers residents to report public problems (damaged roads, open manholes, garbage overflow, potable pipeline bursts, contaminated drinking water, sewer blockages, non-functional streetlights, uncleaned public toilets), discover and back nearby community complaints, save offline drafts in low-connectivity zones, track real-time SLA timelines, and inspect photographic resolution evidence before officially confirming closure.
 
@@ -237,11 +237,10 @@ CodeCivic provides an isolated, enterprise-grade Admin Portal independent of the
 
 ---
 
-## 🏛️ Municipal Jurisdiction & Contact (Kota Deployment)
+## 🏛️ Platform Operations & Contact
 
-- **Target Authority**: Nagar Nigam Kota (Rajasthan, India)
-- **Control Room Helpline**: 0744-2501000
-- **Support Email**: support.kota@codecivic.gov.in
-- **Headquarters**: Nagar Nigam Building, Kota, Rajasthan - 324001
-- **Geo-Coordinates**: 25.1800° N, 75.8300° E
-- **Demonstration Notice**: CodeCivic is an independent civic technology prototype engineered for hackathon presentation and municipal evaluation.
+- **Coverage**: All 28 Indian States & 8 Union Territories
+- **Citizen Helpline**: 1800-180-CIVIC
+- **Support Email**: support@codecivic.gov.in
+- **Central Registry**: National & State Municipal Administration Network
+- **Demonstration Notice**: CodeCivic is an independent civic technology platform engineered for public grievance redressal and transparent municipal evaluation.

@@ -92,9 +92,7 @@ export default function AdminLoginPage({ onNavigate }) {
       {/* Top Banner */}
       <header className="border-b border-white/10 bg-[#0C1A24]/90 backdrop-blur-md px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[#287C78]/20 border border-[#287C78]/50 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-[#D6A64F]" />
-          </div>
+          <img src="/logo-icon.svg" alt="CodeCivic" className="w-10 h-10" />
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-white text-base tracking-wide">CodeCivic</span>
@@ -292,7 +290,7 @@ export default function AdminLoginPage({ onNavigate }) {
 
       {/* Footer */}
       <footer className="border-t border-white/10 bg-[#0C1A24]/70 px-6 py-3 text-center text-xs text-slate-400">
-        CodeCivic Civic Technology System • Nagar Nigam Kota / Pan-India Central Registry
+        CodeCivic Civic Technology System • Pan-India Central Governance Registry
       </footer>
     </div>
   );

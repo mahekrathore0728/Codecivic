@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
-  ShieldAlert,
   Bell,
   Menu,
   X,
@@ -68,17 +67,15 @@ export default function Navbar({ currentRoute, onNavigate, onOpenAuth }) {
             className="flex items-center gap-3 cursor-pointer group select-none"
             onClick={() => onNavigate('home')}
           >
-            <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center border border-white/20 group-hover:bg-white/15 transition-all">
-              <ShieldAlert className="w-6 h-6 text-[#D6A64F]" />
-            </div>
+            <img src="/logo-icon.svg" alt="CodeCivic" className="w-10 h-10" />
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-lg tracking-tight text-white font-sans">CodeCivic</span>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-[#287C78]/40 text-[#90D2CF] border border-[#287C78]/60">
-                  Kota Gov
+                  Pan-India
                 </span>
               </div>
-              <p className="text-[11px] text-[#DCE5E9]/80 leading-none">Civic Issue Resolution System</p>
+              <p className="text-[11px] text-[#DCE5E9]/80 leading-none">Civic Governance Platform</p>
             </div>
           </div>
 

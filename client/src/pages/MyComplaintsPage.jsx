@@ -75,7 +75,7 @@ export default function MyComplaintsPage({ onNavigate }) {
       return;
     }
 
-    if (!window.confirm(`Submit draft "${draft.title}" to Nagar Nigam Kota?`)) {
+    if (!window.confirm(`Submit draft "${draft.title}" to municipal authorities?`)) {
       return;
     }
 
@@ -88,10 +88,10 @@ export default function MyComplaintsPage({ onNavigate }) {
       formData.append('category_id', draft.category_id || 1);
       formData.append('title', draft.title);
       formData.append('description', draft.description);
-      formData.append('address', draft.address || 'Kota');
+      formData.append('address', draft.address || '');
       if (draft.landmark) formData.append('landmark', draft.landmark);
-      formData.append('district', draft.district || 'Kota');
-      formData.append('state', draft.state || 'Rajasthan');
+      formData.append('district', draft.district || user?.district || '');
+      formData.append('state', draft.state || user?.state || '');
       if (draft.ward) formData.append('ward', draft.ward);
       if (draft.latitude) formData.append('latitude', draft.latitude);
       if (draft.longitude) formData.append('longitude', draft.longitude);
@@ -142,7 +142,7 @@ export default function MyComplaintsPage({ onNavigate }) {
           <h1 className="text-2xl font-extrabold text-[#193B50] tracking-tight">Citizen Civic Dashboard</h1>
           <p className="text-xs text-[#64748B] mt-0.5">
             Welcome back, <span className="font-bold text-[#193B50]">{user?.name}</span> • Jurisdiction:{' '}
-            <span className="font-semibold text-[#287C78]">{user?.district || 'Kota'}, {user?.state || 'Rajasthan'}</span>
+            <span className="font-semibold text-[#287C78]">{user?.district && user?.state ? `${user.district}, ${user.state}` : (user?.district || user?.state || 'Pan-India')}</span>
           </p>
         </div>
 
@@ -244,7 +244,7 @@ export default function MyComplaintsPage({ onNavigate }) {
                     <span className="text-xs font-bold text-[#193B50]">{draft.title}</span>
                   </div>
                   <p className="text-xs text-[#64748B] line-clamp-1">{draft.description}</p>
-                  <span className="text-[11px] text-[#64748B] block">📍 {draft.address || 'Kota'} • Saved {new Date(draft.createdAt).toLocaleTimeString()}</span>
+                  <span className="text-[11px] text-[#64748B] block">📍 {draft.address || draft.district || 'Location saved'} • Saved {new Date(draft.createdAt).toLocaleTimeString()}</span>
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-center">
@@ -283,7 +283,7 @@ export default function MyComplaintsPage({ onNavigate }) {
           <div className="p-12 text-center text-xs text-[#64748B]">Loading your complaints...</div>
         ) : complaints.length === 0 ? (
           <div className="p-12 text-center text-xs text-[#64748B] space-y-3">
-            <p>You have not reported any civic issues in Kota yet.</p>
+            <p>You have not reported any civic issues yet.</p>
             <button
               onClick={() => onNavigate('report')}
               className="px-4 py-2 bg-[#193B50] text-white rounded-lg text-xs font-bold"

@@ -41,18 +41,25 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login', init
   const [loginPassword, setLoginPassword] = useState('');
 
   // Citizen Registration state (with Pan-India cascading location)
-  const [regData, setRegData] = useState({
-    name: '',
-    email: '',
-    mobile: '',
-    password: '',
-    confirmPassword: '',
-    state: 'Rajasthan',
-    district: 'Kota',
-    local_body_type: 'MUNICIPAL_CORPORATION',
-    local_body: 'Kota Municipal Corporation',
-    ward_village: 'Ward 1',
-    address: '',
+  const [regData, setRegData] = useState(() => {
+    const defaultState = states && states.length > 0 ? states[0] : '';
+    const dists = defaultState ? getDistrictsForState(defaultState) : [];
+    const defaultDist = dists[0] || '';
+    const bodies = defaultDist ? getLocalBodiesForDistrict(defaultDist, defaultState) : [];
+    const defaultBody = bodies[0] || { name: '', type: 'MUNICIPAL_CORPORATION' };
+    return {
+      name: '',
+      email: '',
+      mobile: '',
+      password: '',
+      confirmPassword: '',
+      state: defaultState,
+      district: defaultDist,
+      local_body_type: defaultBody.type,
+      local_body: defaultBody.name,
+      ward_village: 'Ward 1',
+      address: '',
+    };
   });
 
   // Forgot password state
@@ -200,13 +207,11 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login', init
         {/* Top Header */}
         <div className="bg-[#193B50] px-6 py-4 text-white flex items-center justify-between border-b border-[#254A63] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center border border-white/20">
-              <ShieldCheck className="w-5 h-5 text-[#D6A64F]" />
-            </div>
+            <img src="/logo-icon.svg" alt="CodeCivic" className="w-9 h-9" />
             <div>
               <h3 className="font-bold text-sm tracking-tight">CodeCivic Portal</h3>
               <p className="text-[11px] text-[#DCE5E9]/80 leading-none">
-                {activeTab === 'citizen' ? 'Citizen Engagement Portal' : 'Official Administration Portal'}
+                {activeTab === 'citizen' ? 'Pan-India Citizen Engagement Portal' : 'Official Administration Portal'}
               </p>
             </div>
           </div>

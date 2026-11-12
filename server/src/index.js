@@ -146,7 +146,7 @@ app.get('/api/transparency', (req, res) => {
 
     return res.json({
       success: true,
-      disclaimer: 'Public transparency report for Nagar Nigam Kota. Data shows safe anonymized aggregate figures.',
+      disclaimer: 'Public transparency report for CodeCivic Pan-India Platform. Data shows safe anonymized aggregate figures.',
       summary: {
         totalComplaints,
         resolvedComplaints,

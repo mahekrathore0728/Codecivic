@@ -141,7 +141,7 @@ export default function HomePage({ onNavigate }) {
                     Municipal Resolution Pipeline
                   </h3>
                   <span className="text-[10px] font-bold text-[#D6A64F] uppercase bg-white px-2 py-0.5 rounded border border-[#DCE5E9]">
-                    Kota Zone
+                    Pan-India Platform
                   </span>
                 </div>
 
@@ -179,7 +179,7 @@ export default function HomePage({ onNavigate }) {
 
                 <div className="p-3 bg-white rounded-lg border border-[#DCE5E9] text-[11px] text-[#64748B] flex items-center gap-2">
                   <Shield className="w-4 h-4 text-[#287C78] shrink-0" />
-                  <span>Complaints are audited under Nagar Nigam municipal standards.</span>
+                  <span>Complaints are audited under transparent municipal SLA standards.</span>
                 </div>
               </div>
             </div>
@@ -211,8 +211,8 @@ export default function HomePage({ onNavigate }) {
 
           <div className="bg-white p-5 rounded-xl border border-[#DCE5E9] shadow-2xs">
             <div className="text-xs font-semibold text-[#64748B]">Covered Municipal Wards</div>
-            <div className="text-2xl font-extrabold text-[#193B50] mt-1">Kota Central &amp; South</div>
-            <div className="text-[11px] text-[#64748B] mt-1 font-medium">Active civic coverage</div>
+            <div className="text-2xl font-extrabold text-[#193B50] mt-1">28 States &amp; 8 UTs</div>
+            <div className="text-[11px] text-[#64748B] mt-1 font-medium">Pan-India civic coverage</div>
           </div>
         </div>
       </section>
@@ -311,7 +311,7 @@ export default function HomePage({ onNavigate }) {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
             <div className="md:col-span-8 space-y-3">
               <span className="text-xs font-bold text-[#D6A64F] uppercase tracking-wider">
-                Community Power in Kota
+                Pan-India Community Power
               </span>
               <h2 className="text-xl sm:text-2xl font-bold leading-tight">
                 Citizens Together: Backing Complaints for Faster Municipal Action
