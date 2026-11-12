@@ -22,6 +22,8 @@ import {
   getWardsOrVillages,
 } from '../utils/indiaGeoData';
 
+const ALL_STATES = getAllStates();
+
 export default function AuthModal({ isOpen, onClose, initialView = 'login', initialTab = 'citizen', onSuccess }) {
   const { login, register } = useAuth();
 
@@ -42,7 +44,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login', init
 
   // Citizen Registration state (with Pan-India cascading location)
   const [regData, setRegData] = useState(() => {
-    const defaultState = states && states.length > 0 ? states[0] : '';
+    const defaultState = ALL_STATES.length > 0 ? ALL_STATES[0] : '';
     const dists = defaultState ? getDistrictsForState(defaultState) : [];
     const defaultDist = dists[0] || '';
     const bodies = defaultDist ? getLocalBodiesForDistrict(defaultDist, defaultState) : [];
@@ -67,7 +69,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login', init
 
   if (!isOpen) return null;
 
-  const states = getAllStates();
+  const states = ALL_STATES;
   const availableDistricts = getDistrictsForState(regData.state);
   const availableLocalBodies = getLocalBodiesForDistrict(regData.district, regData.state);
   const isRural = regData.local_body_type === 'GRAM_PANCHAYAT';
