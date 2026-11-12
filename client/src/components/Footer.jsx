@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, MapPin, Phone, Mail, ExternalLink } from 'lucide-react';
+import { Shield, ShieldAlert, MapPin, Phone, Mail, ExternalLink } from 'lucide-react';
 
 export default function Footer({ onNavigate }) {
   return (
