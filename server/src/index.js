@@ -5,6 +5,7 @@ const fs = require('fs');
 const rateLimit = require('express-rate-limit');
 const config = require('./config');
 const db = require('./db');
+const seedDatabase = require('./seed');
 
 // Route modules
 const authRoutes = require('./routes/auth');
@@ -249,13 +250,22 @@ app.use((err, req, res, next) => {
 
 let server = null;
 if (require.main === module) {
-  server = app.listen(config.PORT, () => {
-    console.log(`====================================================`);
-    console.log(`CodeCivic Civic Governance Server running on port ${config.PORT}`);
-    console.log(`API Base URL: http://localhost:${config.PORT}/api`);
-    console.log(`Environment: ${config.NODE_ENV}`);
-    console.log(`====================================================`);
-  });
+  // Auto-seed on every startup — seed.js uses upsert logic so it is safe to call repeatedly.
+  // This guarantees demo accounts and reference data exist in production (Render ephemeral FS).
+  seedDatabase()
+    .then(() => {
+      server = app.listen(config.PORT, () => {
+        console.log(`====================================================`);
+        console.log(`CodeCivic Civic Governance Server running on port ${config.PORT}`);
+        console.log(`API Base URL: http://localhost:${config.PORT}/api`);
+        console.log(`Environment: ${config.NODE_ENV}`);
+        console.log(`====================================================`);
+      });
+    })
+    .catch((err) => {
+      console.error('FATAL: Database seeding failed on startup:', err);
+      process.exit(1);
+    });
 }
 
 module.exports = { app, server };

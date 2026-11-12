@@ -16,13 +16,18 @@ import {
 } from 'lucide-react';
 
 export default function AdminLoginPage({ onNavigate }) {
-  const { user, isAdmin, isAuthenticated, login } = useAuth();
+  const { user, isAdmin, isAuthenticated, login, setAuthSession } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Evaluator-only authentication state
+  const [evaluatorKey, setEvaluatorKey] = useState('');
+  const [evaluatorLoading, setEvaluatorLoading] = useState(false);
+  const [showEvaluatorMode, setShowEvaluatorMode] = useState(true);
 
   // If already logged in as Admin, redirect directly to dashboard
   useEffect(() => {
@@ -50,10 +55,35 @@ export default function AdminLoginPage({ onNavigate }) {
     }
   };
 
-  const fillAdminDemo = () => {
-    setEmail('admin@codecivic.gov.in');
-    setPassword('Admin@CodeCivic2026');
+  const handleEvaluatorLogin = async (e) => {
+    if (e) e.preventDefault();
     setError('');
+    setEvaluatorLoading(true);
+
+    try {
+      const keyToUse = evaluatorKey.trim();
+
+      if (!keyToUse) {
+        throw new Error('Please enter your evaluator access key.');
+      }
+      const res = await fetch('/api/auth/evaluator-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ evaluatorKey: keyToUse }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Evaluator authentication failed.');
+      }
+
+      setAuthSession(data.token, data.user);
+      onNavigate('/admin/dashboard');
+    } catch (err) {
+      setError(err.message || 'Invalid evaluator access key. Access denied.');
+    } finally {
+      setEvaluatorLoading(false);
+    }
   };
 
   return (
@@ -121,78 +151,133 @@ export default function AdminLoginPage({ onNavigate }) {
             </div>
           )}
 
-          {/* Quick Demo Credentials Populate */}
-          <div className="mb-6 p-3 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold text-[#D6A64F] uppercase tracking-wider block">
-                Evaluation Access
-              </span>
-              <span className="text-[11px] text-slate-300">Municipal Commissioner Demo</span>
-            </div>
+          {/* Mode Selector: Evaluator Access vs Official Officer Login */}
+          <div className="flex rounded-xl bg-[#0F2636] p-1 border border-[#2B546E] mb-6">
             <button
               type="button"
-              onClick={fillAdminDemo}
-              className="px-3 py-1.5 bg-[#287C78] hover:bg-[#1E5F5C] text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+              onClick={() => { setShowEvaluatorMode(true); setError(''); }}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${showEvaluatorMode
+                  ? 'bg-[#287C78] text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white'
+                }`}
             >
               <KeyRound className="w-3.5 h-3.5 text-[#D6A64F]" />
-              Populate
+              <span>Evaluator Access</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowEvaluatorMode(false); setError(''); }}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${!showEvaluatorMode
+                  ? 'bg-[#193B50] text-white border border-[#2B546E] shadow-xs'
+                  : 'text-slate-400 hover:text-white'
+                }`}
+            >
+              <Shield className="w-3.5 h-3.5 text-[#D6A64F]" />
+              <span>Officer Sign In</span>
             </button>
           </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleAdminLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-200 mb-1.5">
-                Official Administrative Email
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="officer@codecivic.gov.in"
-                className="w-full px-4 py-2.5 bg-[#0F2636] border border-[#2B546E] focus:border-[#D6A64F] text-white text-xs rounded-xl outline-none transition-all placeholder:text-slate-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-200 mb-1.5">
-                Security Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full px-4 py-2.5 bg-[#0F2636] border border-[#2B546E] focus:border-[#D6A64F] text-white text-xs rounded-xl outline-none transition-all placeholder:text-slate-500 pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+          {/* Evaluator Access Mode (Passwordless for hackathon jury via secure server key) */}
+          {showEvaluatorMode && (
+            <form onSubmit={handleEvaluatorLogin} className="space-y-4">
+              <div className="p-3.5 bg-white/5 border border-white/10 rounded-xl space-y-2 text-left">
+                <span className="text-[11px] font-bold text-[#D6A64F] uppercase tracking-wider block">
+                  Hackathon Evaluation Access
+                </span>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Evaluators can access the full municipal governance console using the evaluation passkey.
+                  Admin credentials are never exposed through client bundles or public APIs.
+                </p>
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-[#287C78] to-[#1F6360] hover:from-[#1F6360] hover:to-[#174F4D] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md mt-2 flex items-center justify-center gap-2 border border-teal-400/20"
-            >
-              {loading ? (
-                <span>Authenticating Officer...</span>
-              ) : (
-                <>
-                  <ShieldCheck className="w-4 h-4 text-[#D6A64F]" />
-                  <span>Access Command Center</span>
-                </>
-              )}
-            </button>
-          </form>
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1.5 text-left">
+                  Evaluator Access Key
+                </label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    value={evaluatorKey}
+                    onChange={(e) => setEvaluatorKey(e.target.value)}
+                    placeholder="Enter your evaluator access key"
+                    className="w-full px-4 py-2.5 bg-[#0F2636] border border-[#2B546E] focus:border-[#D6A64F] text-white text-xs rounded-xl outline-none transition-all placeholder:text-slate-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={evaluatorLoading}
+                className="w-full py-3 bg-gradient-to-r from-[#287C78] to-[#1F6360] hover:from-[#1F6360] hover:to-[#174F4D] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md mt-2 flex items-center justify-center gap-2 border border-teal-400/20 disabled:opacity-50"
+              >
+                {evaluatorLoading ? (
+                  <span>Verifying Evaluator Key...</span>
+                ) : (
+                  <>
+                    <KeyRound className="w-4 h-4 text-[#D6A64F]" />
+                    <span>Authenticate as Evaluator</span>
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+
+          {/* Official Officer Sign In Mode (Email + Password) */}
+          {!showEvaluatorMode && (
+            <form onSubmit={handleAdminLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1.5 text-left">
+                  Official Administrative Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="officer@codecivic.gov.in"
+                  className="w-full px-4 py-2.5 bg-[#0F2636] border border-[#2B546E] focus:border-[#D6A64F] text-white text-xs rounded-xl outline-none transition-all placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1.5 text-left">
+                  Security Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full px-4 py-2.5 bg-[#0F2636] border border-[#2B546E] focus:border-[#D6A64F] text-white text-xs rounded-xl outline-none transition-all placeholder:text-slate-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-gradient-to-r from-[#287C78] to-[#1F6360] hover:from-[#1F6360] hover:to-[#174F4D] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md mt-2 flex items-center justify-center gap-2 border border-teal-400/20 disabled:opacity-50"
+              >
+                {loading ? (
+                  <span>Authenticating Officer...</span>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4 text-[#D6A64F]" />
+                    <span>Access Command Center</span>
+                  </>
+                )}
+              </button>
+            </form>
+          )}
 
           {/* Security Disclaimer */}
           <div className="mt-6 pt-5 border-t border-white/10 text-center text-[11px] text-slate-400">

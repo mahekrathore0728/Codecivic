@@ -88,7 +88,7 @@ export default function Footer({ onNavigate }) {
 
         <div className="mt-8 pt-6 border-t border-[#254A63] flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-[#DCE5E9]/60">
           <div>
-            &copy; {new Date().getFullYear()} CodeCivic Governance Portal. Production civic tech infrastructure for Nagar Nigam Kota &amp; Pan-India.
+            &copy; {new Date().getFullYear()} CodeCivic Governance Portal &bull; <span className="text-[#D6A64F]/90 font-medium">This is a demonstration deployment. Data may be reset periodically.</span>
           </div>
           <div className="flex items-center gap-4">
             <button

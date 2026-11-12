@@ -82,6 +82,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const setAuthSession = (sessionToken, sessionUser) => {
+    localStorage.setItem('codecivic_token', sessionToken);
+    setToken(sessionToken);
+    setUser(sessionUser);
+  };
+
   const authFetch = async (url, options = {}) => {
     const headers = options.headers ? { ...options.headers } : {};
     if (token) {
@@ -103,6 +109,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         authFetch,
         setUser,
+        setAuthSession,
       }}
     >
       {children}

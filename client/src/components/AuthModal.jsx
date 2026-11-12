@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   X,
@@ -13,11 +13,12 @@ import {
   User,
   Shield,
   Info,
+  Loader2,
 } from 'lucide-react';
 import { getAllStates, getDistrictsForState } from '../utils/indiaGeoData';
 
 export default function AuthModal({ isOpen, onClose, initialView = 'login', onSuccess }) {
-  const { login, register } = useAuth();
+  const { login, register, setAuthSession } = useAuth();
   const [view, setView] = useState(initialView); // 'login', 'register', 'forgot', 'reset'
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -25,6 +26,10 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login', onSu
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [copiedAccount, setCopiedAccount] = useState(null);
+
+  // Demo accounts — fetched from server so credentials are NOT compiled into the client bundle.
+  const [demoAccounts, setDemoAccounts] = useState([]);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -47,51 +52,61 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login', onSu
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
+  // Fetch demo credentials from server when modal opens on login view
+  useEffect(() => {
+    if (!isOpen || view !== 'login') return;
+    if (demoAccounts.length > 0) return; // already loaded
+    setDemoLoading(true);
+    fetch('/api/auth/demo-credentials')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.accounts)) {
+          // Attach UI-only display metadata (no security impact)
+          const decorated = data.accounts.map((a) => ({
+            ...a,
+            badgeColor: a.role === 'ADMIN'
+              ? 'bg-[#D6A64F]/20 text-[#D6A64F] border-[#D6A64F]/40'
+              : 'bg-[#287C78]/15 text-[#287C78] border-[#287C78]/30',
+            icon: a.role === 'ADMIN' ? Shield : User,
+          }));
+          setDemoAccounts(decorated);
+        }
+      })
+      .catch(() => {
+        // Demo credentials unavailable — silently hide the demo section
+        setDemoAccounts([]);
+      })
+      .finally(() => setDemoLoading(false));
+  }, [isOpen, view, demoAccounts.length]);
+
   if (!isOpen) return null;
 
-  // Demo accounts data as specified in Requirement 7
-  const demoAccounts = [
-    {
-      id: 'admin',
-      type: 'Administrator Demo',
-      name: 'Kota Municipal Commissioner',
-      email: 'admin@codecivic.gov.in',
-      password: 'Admin@CodeCivic2026',
-      role: 'ADMIN',
-      badgeColor: 'bg-[#D6A64F]/20 text-[#D6A64F] border-[#D6A64F]/40',
-      icon: Shield,
-    },
-    {
-      id: 'citizen1',
-      type: 'Citizen Demo 1',
-      name: 'Ramesh Kumar (Ward 14)',
-      email: 'ramesh.citizen@codecivic.gov.in',
-      password: 'Citizen@123',
-      role: 'CITIZEN',
-      badgeColor: 'bg-[#287C78]/15 text-[#287C78] border-[#287C78]/30',
-      icon: User,
-    },
-    {
-      id: 'citizen2',
-      type: 'Citizen Demo 2',
-      name: 'Priya Sharma (Vigyan Nagar)',
-      email: 'priya.sharma@codecivic.gov.in',
-      password: 'Citizen@123',
-      role: 'CITIZEN',
-      badgeColor: 'bg-[#287C78]/15 text-[#287C78] border-[#287C78]/30',
-      icon: User,
-    },
-  ];
-
-  const handleSelectDemo = (account) => {
-    setLoginEmail(account.email);
-    setLoginPassword(account.password);
+  const handleSelectDemo = async (account) => {
     setError('');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/demo-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId: account.id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Demo login failed.');
+      }
+      setAuthSession(data.token, data.user);
+      onClose();
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      setError(err.message || 'Could not authenticate demo citizen.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCopyCredentials = (account, e) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(`${account.email} | ${account.password}`);
+    navigator.clipboard.writeText(account.email);
     setCopiedAccount(account.id);
     setTimeout(() => setCopiedAccount(null), 2000);
   };
@@ -140,6 +155,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login', onSu
   const handleForgotSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setLoading(true);
     try {
       const res = await fetch('/api/auth/forgot-password', {
@@ -148,14 +164,10 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login', onSu
         body: JSON.stringify({ email: forgotEmail }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setSuccessMessage(data.message);
-        if (data.resetToken) {
-          setResetToken(data.resetToken);
-          setView('reset');
-        }
       } else {
-        setError(data.message || 'Error processing request.');
+        setError(data.message || 'Unable to process password recovery.');
       }
     } catch (err) {
       setError('Network error. Please try again.');
@@ -240,7 +252,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login', onSu
             </div>
           )}
 
-          {/* DEMO ACCESS SECTION (REQUIREMENT 7) */}
+          {/* DEMO ACCESS SECTION (REQUIREMENT 7) — credentials fetched from server, not compiled into bundle */}
           {view === 'login' && (
             <div className="mb-5 p-3.5 bg-[#F4F7F8] border border-[#DCE5E9] rounded-xl space-y-2">
               <div className="flex items-center justify-between">
@@ -251,43 +263,58 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login', onSu
                 <span className="text-[10px] text-[#64748B] font-medium">Click to populate</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                {demoAccounts.map((account) => {
-                  const Icon = account.icon;
-                  const isSelected = loginEmail === account.email;
-                  return (
-                    <div
-                      key={account.id}
-                      onClick={() => handleSelectDemo(account)}
-                      className={`p-2.5 rounded-lg border text-left cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-white border-[#193B50] ring-1 ring-[#193B50] shadow-xs'
-                          : 'bg-white border-[#DCE5E9] hover:border-[#287C78]'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="font-bold text-[11px] text-[#193B50] truncate">{account.type}</span>
-                        <button
-                          type="button"
-                          onClick={(e) => handleCopyCredentials(account, e)}
-                          title="Copy Email & Password"
-                          className="p-1 hover:bg-[#F4F7F8] rounded text-[#64748B] hover:text-[#193B50]"
-                        >
-                          {copiedAccount === account.id ? (
-                            <Check className="w-3 h-3 text-[#328568]" />
-                          ) : (
-                            <Copy className="w-3 h-3" />
-                          )}
-                        </button>
+              {demoLoading && (
+                <div className="flex items-center gap-2 py-2 text-[11px] text-[#64748B]">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Loading demo accounts…
+                </div>
+              )}
+
+              {!demoLoading && demoAccounts.length === 0 && (
+                <p className="text-[10px] text-[#64748B] italic py-1">
+                  Demo accounts unavailable in this deployment.
+                </p>
+              )}
+
+              {!demoLoading && demoAccounts.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                  {demoAccounts.map((account) => {
+                    const Icon = account.icon;
+                    const isSelected = loginEmail === account.email;
+                    return (
+                      <div
+                        key={account.id}
+                        onClick={() => handleSelectDemo(account)}
+                        className={`p-2.5 rounded-lg border text-left cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-white border-[#193B50] ring-1 ring-[#193B50] shadow-xs'
+                            : 'bg-white border-[#DCE5E9] hover:border-[#287C78]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <span className="font-bold text-[11px] text-[#193B50] truncate">{account.type}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyCredentials(account, e)}
+                            title="Copy Email"
+                            className="p-1 hover:bg-[#F4F7F8] rounded text-[#64748B] hover:text-[#193B50]"
+                          >
+                            {copiedAccount === account.id ? (
+                              <Check className="w-3 h-3 text-[#328568]" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-[#64748B] truncate font-mono">{account.email}</p>
+                        <p className="text-[10px] text-[#287C78] font-semibold mt-0.5">Click to sign in instantly</p>
                       </div>
-                      <p className="text-[10px] text-[#64748B] truncate font-mono">{account.email}</p>
-                      <p className="text-[10px] text-[#287C78] font-mono mt-0.5">{account.password}</p>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
               <div className="text-[10px] text-[#64748B] italic">
-                * Note: Selecting an option fills credentials. Please click "Sign In" below to authenticate.
+                * Citizen demonstration accounts for evaluation. One-click passwordless sign in.
               </div>
             </div>
           )}

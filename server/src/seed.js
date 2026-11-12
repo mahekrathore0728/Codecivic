@@ -149,11 +149,17 @@ async function seedDatabase() {
   const upsertUser = (name, email, mobile, hash, role, state, district) => {
     const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
     if (existing) {
+      // SAFE UPSERT: Only insert reference fields that are missing.
+      // NEVER overwrite password_hash — a returning citizen may have changed their password.
+      // Only update non-sensitive identity fields (name, role, state, district) if they haven't
+      // been personalised, and ensure the mobile number column is not colliding.
+      // For demo accounts, we do update name/role/state/district so they stay canonical,
+      // but we deliberately preserve any password change made by a human operator.
       db.prepare(`
         UPDATE users
-        SET name = ?, mobile = ?, password_hash = ?, role = ?, state = ?, district = ?, updated_at = CURRENT_TIMESTAMP
+        SET name = ?, role = ?, state = ?, district = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
-      `).run(name, mobile, hash, role, state, district, existing.id);
+      `).run(name, role, state, district, existing.id);
       return existing.id;
     } else {
       const info = db.prepare(`
@@ -495,9 +501,7 @@ async function seedDatabase() {
 
   console.log('Seeding completed successfully!');
   console.log('----------------------------------------------------');
-  console.log('Admin Demo Account: admin@codecivic.gov.in / Admin@CodeCivic2026');
-  console.log('Citizen Demo 1:     ramesh.citizen@codecivic.gov.in / Citizen@123');
-  console.log('Citizen Demo 2:     priya.sharma@codecivic.gov.in / Citizen@123');
+  console.log('Demo accounts seeded. See README for access instructions.');
   console.log('Location Focus:     Kota, Rajasthan');
   console.log('Sequential IDs:     CC-2026-00001 through CC-2026-00011');
   console.log('----------------------------------------------------');

@@ -98,11 +98,11 @@ The system uses persistent SQLite via `better-sqlite3` with **Write-Ahead Loggin
 
 The database is pre-seeded with ready-to-test accounts for development and evaluation:
 
-| Role | Email | Password | Permissions |
-|---|---|---|---|
-| **Municipal Administrator** | `admin@codecivic.gov.in` | `Admin@CodeCivic2026` | Full administrative console, department management, complaint routing, status updates, evidence submission, analytics |
-| **Citizen 1 (Ramesh Kumar)** | `ramesh.citizen@codecivic.gov.in` | `Citizen@123` | Lodge complaints, explore public issues, community support, track timeline, verify resolution, escalate |
-| **Citizen 2 (Priya Sharma)** | `priya.sharma@codecivic.gov.in` | `Citizen@123` | Demonstration citizen account with active complaints |
+| Role | Email | Access |
+|---|---|---|
+| **Municipal Administrator** | `admin@codecivic.gov.in` | Use the **Demo Access** button on the login screen |
+| **Citizen 1 (Ramesh Kumar)** | `ramesh.citizen@codecivic.gov.in` | Use the **Demo Access** button on the login screen |
+| **Citizen 2 (Priya Sharma)** | `priya.sharma@codecivic.gov.in` | Use the **Demo Access** button on the login screen |
 
 > **Development Convenience**: The login dialog features a dedicated **"Demo Access"** card section allowing one-click population of credentials for evaluation without automatic bypass.
 >

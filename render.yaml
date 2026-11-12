@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: codecivic
+    runtime: node
+    region: singapore
+    plan: free
+    rootDir: .
+    buildCommand: npm install && npm --prefix client install && npm run build
+    startCommand: node server/src/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        sync: false          # Set manually in Render dashboard — never commit this
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: ALLOWED_ORIGINS
+        value: https://codecivic-3lwa.onrender.com
+      - key: AUTH_RATE_LIMIT_MAX
+        value: 20
+      - key: API_RATE_LIMIT_MAX
+        value: 300
+      - key: ENABLE_DEMO_CREDENTIALS
+        value: "true"   # Set to "false" to disable demo & evaluator access
+      - key: EVALUATOR_KEY
+        sync: false # Key for evaluator login on /admin/login
+      # NOTE: Render free tier has an ephemeral filesystem.
+      # The SQLite DB and uploaded files are reset on each deploy/restart.
+      # The startup auto-seed (in index.js) re-creates all demo accounts and reference data automatically.
+      # For persistent data across restarts, upgrade to a paid Render plan or migrate to PostgreSQL.
+      - key: DB_PATH
+        value: /tmp/codecivic.db
+      - key: UPLOAD_DIR
+        value: /tmp/uploads

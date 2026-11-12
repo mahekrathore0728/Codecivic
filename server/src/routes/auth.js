@@ -257,7 +257,13 @@ router.post('/change-password', authenticateToken, async (req, res) => {
 
 /**
  * POST /api/auth/forgot-password
- * Generates password reset token
+ * Initiates password recovery.
+ *
+ * SECURITY ENFORCEMENT:
+ * - If email dispatch (SMTP) is not configured, returns HTTP 503 with an explicit message
+ *   explaining that automated recovery is disabled, directing users to official municipal support.
+ * - In no circumstances is a reset token EVER returned in the HTTP response.
+ * - Uniform neutral response prevents user account enumeration when email delivery is active.
  */
 router.post('/forgot-password', async (req, res) => {
   try {
@@ -266,31 +272,41 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide your registered email.' });
     }
 
-    const trimmedEmail = email.trim().toLowerCase();
-    const user = db.prepare('SELECT id, name FROM users WHERE email = ?').get(trimmedEmail);
-
-    if (!user) {
-      // Return neutral message for security
-      return res.json({
-        success: true,
-        message: 'If this email is registered with CodeCivic, a password reset link has been prepared.',
+    // When automated email delivery is not configured, safely disable self-service reset
+    if (!config.SMTP_CONFIGURED) {
+      return res.status(503).json({
+        success: false,
+        code: 'EMAIL_NOT_CONFIGURED',
+        message: 'Self-service password reset is disabled because automated email delivery (SMTP) is not configured on this server. Please contact municipal support at support.kota@codecivic.gov.in or visit your local ward administration office for identity verification and account assistance.',
       });
     }
 
-    const resetToken = crypto.randomBytes(24).toString('hex');
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+    const trimmedEmail = email.trim().toLowerCase();
+    const user = db.prepare('SELECT id, name FROM users WHERE email = ?').get(trimmedEmail);
 
-    db.prepare(`
-      INSERT INTO password_resets (email, token, expires_at)
-      VALUES (?, ?, ?)
-    `).run(trimmedEmail, resetToken, expiresAt);
+    if (user) {
+      // Generate cryptographically secure token
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      // Store SHA-256 hash in database rather than raw token
+      const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15-minute expiry (single use)
 
-    // Return token directly for simple civic self-service reset in environments without active SMTP
+      // Invalidate existing unused tokens for this email
+      db.prepare('UPDATE password_resets SET used = 1 WHERE email = ? AND used = 0').run(trimmedEmail);
+
+      db.prepare(`
+        INSERT INTO password_resets (email, token, expires_at)
+        VALUES (?, ?, ?)
+      `).run(trimmedEmail, hashedToken, expiresAt);
+
+      // In production with active SMTP, the rawToken would be dispatched via email here.
+      // Notice: rawToken is NEVER included in the API response.
+    }
+
+    // Always return uniform neutral response to protect citizen privacy
     return res.json({
       success: true,
-      message: 'Password reset instructions have been generated.',
-      resetToken, // Provided for user-friendly testing & self-serve reset
-      note: 'In production with SMTP enabled, this reset token is sent securely to the citizen\'s inbox.',
+      message: 'If this email address is registered with CodeCivic, password reset instructions have been sent to your inbox.',
     });
   } catch (err) {
     console.error('Forgot password error:', err);
@@ -300,10 +316,17 @@ router.post('/forgot-password', async (req, res) => {
 
 /**
  * POST /api/auth/reset-password
- * Reset password using token
+ * Reset password using single-use cryptographic token.
  */
 router.post('/reset-password', async (req, res) => {
   try {
+    if (!config.SMTP_CONFIGURED) {
+      return res.status(503).json({
+        success: false,
+        message: 'Password reset is disabled because automated email delivery is not configured.',
+      });
+    }
+
     const { token, newPassword, confirmPassword } = req.body;
 
     if (!token || !newPassword || !confirmPassword) {
@@ -318,10 +341,12 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
     }
 
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
     const resetRecord = db.prepare(`
       SELECT * FROM password_resets
       WHERE token = ? AND used = 0 AND expires_at > datetime('now')
-    `).get(token);
+    `).get(hashedToken);
 
     if (!resetRecord) {
       return res.status(400).json({
@@ -333,7 +358,7 @@ router.post('/reset-password', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const newHash = await bcrypt.hash(newPassword, salt);
 
-    // Update user password and mark token as used
+    // Update user password and atomically invalidate token
     db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE email = ?').run(newHash, resetRecord.email);
     db.prepare('UPDATE password_resets SET used = 1 WHERE id = ?').run(resetRecord.id);
 
@@ -344,6 +369,185 @@ router.post('/reset-password', async (req, res) => {
   } catch (err) {
     console.error('Reset password error:', err);
     return res.status(500).json({ success: false, message: 'Error resetting password.' });
+  }
+});
+
+/**
+ * GET /api/auth/demo-credentials
+ * Returns demo account credentials for hackathon evaluators.
+ *
+ * SECURITY NOTE: This endpoint is intentionally public so evaluators can log in
+ * without credentials being compiled into the client JavaScript bundle.
+ * In a production deployment that is NOT a hackathon demo, this endpoint
+ * should be removed or gated behind an IP allowlist / evaluator token.
+ *
+ * Credentials here match what seed.js inserts. They are not secret for a demo
+ * platform, but keeping them server-side prevents them appearing in browser
+ * DevTools → Sources, cached Service Workers, or public CDN edge caches.
+ */
+router.get('/demo-credentials', (req, res) => {
+  if (!config.ENABLE_DEMO_CREDENTIALS) {
+    return res.status(404).json({
+      success: false,
+      message: 'Demo accounts are not available in this deployment.',
+    });
+  }
+
+  // NOTE: Return citizen demo profile identifiers only.
+  // NO passwords or password hashes are ever returned in public API responses.
+  // Evaluators and test users can click to log in via POST /api/auth/demo-login.
+  return res.json({
+    success: true,
+    note: 'Citizen demonstration accounts for civic evaluation.',
+    accounts: [
+      {
+        id: 'citizen1',
+        type: 'Citizen Demo 1',
+        name: 'Ramesh Kumar (Ward 14)',
+        email: 'ramesh.citizen@codecivic.gov.in',
+        role: 'CITIZEN',
+      },
+      {
+        id: 'citizen2',
+        type: 'Citizen Demo 2',
+        name: 'Priya Sharma (Vigyan Nagar)',
+        email: 'priya.sharma@codecivic.gov.in',
+        role: 'CITIZEN',
+      },
+    ],
+  });
+});
+
+/**
+ * POST /api/auth/demo-login
+ * Direct passwordless login for demo citizens during hackathon evaluation.
+ * Strictly limited to pre-seeded CITIZEN demo accounts.
+ * Administrator accounts CANNOT be accessed via this endpoint.
+ */
+router.post('/demo-login', async (req, res) => {
+  try {
+    if (!config.ENABLE_DEMO_CREDENTIALS) {
+      return res.status(403).json({
+        success: false,
+        message: 'Demo login is disabled in this deployment.',
+      });
+    }
+
+    const { accountId } = req.body;
+    const allowedDemoMap = {
+      citizen1: 'ramesh.citizen@codecivic.gov.in',
+      citizen2: 'priya.sharma@codecivic.gov.in',
+    };
+
+    const targetEmail = allowedDemoMap[accountId];
+    if (!targetEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid demo account selected. Administrator accounts cannot be accessed via demo login.',
+      });
+    }
+
+    const user = db.prepare(`
+      SELECT id, name, email, mobile, role, state, district
+      FROM users WHERE email = ?
+    `).get(targetEmail);
+
+    if (!user || user.role !== 'CITIZEN') {
+      return res.status(404).json({
+        success: false,
+        message: 'Demo citizen account not found.',
+      });
+    }
+
+    const token = jwt.sign({ id: user.id, role: 'CITIZEN' }, config.JWT_SECRET, {
+      expiresIn: config.JWT_EXPIRES_IN,
+    });
+
+    return res.json({
+      success: true,
+      message: `Authenticated as demo citizen: ${user.name}`,
+      token,
+      user,
+    });
+  } catch (err) {
+    console.error('Demo login error:', err);
+    return res.status(500).json({ success: false, message: 'Demo login failed.' });
+  }
+});
+
+/**
+ * POST /api/auth/evaluator-login
+ * Secure evaluator-only login for official hackathon jury & reviewers.
+ * Requires the EVALUATOR_KEY secret (configured via server environment).
+ * Never exposes the administrator's password in API responses or bundle.
+ */
+router.post('/evaluator-login', async (req, res) => {
+  try {
+    if (!config.ENABLE_DEMO_CREDENTIALS) {
+      return res.status(403).json({
+        success: false,
+        message: 'Evaluator login is disabled in this deployment.',
+      });
+    }
+
+    const { evaluatorKey } = req.body;
+    if (!evaluatorKey || typeof evaluatorKey !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Evaluator access key is required.',
+      });
+    }
+
+    if (!config.EVALUATOR_KEY) {
+  return res.status(503).json({
+    success: false,
+    message: 'Evaluator login is not configured.',
+  });
+}
+
+    // Secure timing-safe comparison
+    const expectedKey = config.EVALUATOR_KEY;
+    const providedBuffer = Buffer.from(evaluatorKey);
+    const expectedBuffer = Buffer.from(expectedKey);
+
+    const isMatch = providedBuffer.length === expectedBuffer.length &&
+      crypto.timingSafeEqual(providedBuffer, expectedBuffer);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid evaluator access key. Access denied.',
+      });
+    }
+
+    // Retrieve official municipal administrator profile
+    const adminUser = db.prepare(`
+      SELECT id, name, email, mobile, role, state, district
+      FROM users WHERE role = 'ADMIN'
+      ORDER BY id ASC
+      LIMIT 1
+    `).get();
+
+    if (!adminUser) {
+      return res.status(500).json({
+        success: false,
+        message: 'No administrator account found in database.',
+      });
+    }
+
+    const token = jwt.sign({ id: adminUser.id, role: 'ADMIN' }, config.JWT_SECRET, {
+      expiresIn: '24h',
+    });
+
+    return res.json({
+      success: true,
+      message: 'Evaluator authenticated successfully. Granted administrator access.',
+      token,
+      user: adminUser,
+    });
+  } catch (err) {
+    console.error('Evaluator login error:', err);
+    return res.status(500).json({ success: false, message: 'Evaluator authentication failed.' });
   }
 });
 

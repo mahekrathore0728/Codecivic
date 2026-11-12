@@ -45,6 +45,11 @@ module.exports = {
     LOW: 120,
   },
 
+  // Hackathon demo & evaluator settings
+  ENABLE_DEMO_CREDENTIALS: process.env.ENABLE_DEMO_CREDENTIALS === 'true' || !isProduction,
+  EVALUATOR_KEY: process.env.EVALUATOR_KEY || null,
+  SMTP_CONFIGURED: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER),
+
   // Rate limiting config
   AUTH_RATE_LIMIT_MAX: parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) || 20,
   API_RATE_LIMIT_MAX: parseInt(process.env.API_RATE_LIMIT_MAX, 10) || 300,

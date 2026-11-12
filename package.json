@@ -10,7 +10,7 @@
     "build": "npm --prefix client run build",
     "start": "node server/src/index.js",
     "seed": "node server/src/seed.js",
-    "test": "node server/tests/run_tests.js && node server/tests/e2e_integration_test.js"
+    "test": "node server/tests/run_tests.js && node server/tests/e2e_integration_test.js && node server/tests/security_auth_audit_test.js"
   },
   "keywords": [
     "civic-tech",
