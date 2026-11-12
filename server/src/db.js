@@ -21,17 +21,26 @@ db.pragma('foreign_keys = ON');
 // Initialize database tables
 const initSchema = () => {
   db.exec(`
-    -- Users Table (Citizens and Administrators)
+    -- Users Table (Citizens and Administrators across 6 tiers)
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL COLLATE NOCASE,
       mobile TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'CITIZEN' CHECK (role IN ('CITIZEN', 'ADMIN')),
+      role TEXT NOT NULL DEFAULT 'CITIZEN' CHECK (role IN ('CITIZEN', 'ADMIN', 'NATIONAL_SUPER_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'LOCAL_BODY_ADMIN', 'DEPARTMENT_ADMIN', 'FIELD_OFFICER')),
       state TEXT NOT NULL,
       district TEXT NOT NULL,
       avatar_url TEXT,
+      assigned_state TEXT,
+      assigned_district TEXT,
+      assigned_local_body TEXT,
+      assigned_local_body_id INTEGER,
+      assigned_department_id INTEGER,
+      is_active INTEGER DEFAULT 1,
+      local_body_type TEXT,
+      ward_village TEXT,
+      address TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -171,7 +180,57 @@ const initSchema = () => {
       target_type TEXT NOT NULL,
       target_id INTEGER,
       details TEXT,
+      ip_address TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Geographic Hierarchy Tables (Pan-India)
+    CREATE TABLE IF NOT EXISTS states (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT UNIQUE NOT NULL,
+      name TEXT UNIQUE NOT NULL COLLATE NOCASE,
+      type TEXT NOT NULL DEFAULT 'STATE' CHECK (type IN ('STATE', 'UT'))
+    );
+
+    CREATE TABLE IF NOT EXISTS districts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      state_id INTEGER REFERENCES states(id) ON DELETE CASCADE,
+      state_name TEXT NOT NULL COLLATE NOCASE,
+      name TEXT NOT NULL COLLATE NOCASE,
+      UNIQUE(state_name, name)
+    );
+
+    CREATE TABLE IF NOT EXISTS local_bodies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      district_id INTEGER REFERENCES districts(id) ON DELETE CASCADE,
+      state_name TEXT NOT NULL COLLATE NOCASE,
+      district_name TEXT NOT NULL COLLATE NOCASE,
+      name TEXT NOT NULL COLLATE NOCASE,
+      body_type TEXT NOT NULL CHECK (body_type IN ('MUNICIPAL_CORPORATION', 'MUNICIPAL_COUNCIL', 'MUNICIPALITY', 'NAGAR_PANCHAYAT', 'GRAM_PANCHAYAT')),
+      pin_code_prefix TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(district_name, name)
+    );
+
+    CREATE TABLE IF NOT EXISTS wards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      local_body_id INTEGER REFERENCES local_bodies(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      ward_number TEXT,
+      type TEXT NOT NULL DEFAULT 'WARD' CHECK (type IN ('WARD', 'VILLAGE')),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Field Officer Assignments Table
+    CREATE TABLE IF NOT EXISTS officer_assignments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      complaint_id INTEGER NOT NULL REFERENCES complaints(id) ON DELETE CASCADE,
+      officer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      assigned_by_id INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+      notes TEXT,
+      status TEXT NOT NULL DEFAULT 'ASSIGNED' CHECK (status IN ('ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'REASSIGNED')),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
     -- Password Reset Tokens
@@ -221,6 +280,63 @@ try {
   if (!tableCols.includes('is_demo')) {
     db.prepare('ALTER TABLE complaints ADD COLUMN is_demo INTEGER DEFAULT 0').run();
   }
+  if (!tableCols.includes('assigned_officer_id')) {
+    db.prepare('ALTER TABLE complaints ADD COLUMN assigned_officer_id INTEGER REFERENCES users(id)').run();
+  }
+  if (!tableCols.includes('local_body')) {
+    db.prepare('ALTER TABLE complaints ADD COLUMN local_body TEXT').run();
+  }
+  if (!tableCols.includes('local_body_id')) {
+    db.prepare('ALTER TABLE complaints ADD COLUMN local_body_id INTEGER REFERENCES local_bodies(id)').run();
+  }
+  if (!tableCols.includes('local_body_type')) {
+    db.prepare('ALTER TABLE complaints ADD COLUMN local_body_type TEXT').run();
+  }
+  if (!tableCols.includes('ward_village')) {
+    db.prepare('ALTER TABLE complaints ADD COLUMN ward_village TEXT').run();
+  }
+  if (!tableCols.includes('state_id')) {
+    db.prepare('ALTER TABLE complaints ADD COLUMN state_id INTEGER').run();
+  }
+  if (!tableCols.includes('district_id')) {
+    db.prepare('ALTER TABLE complaints ADD COLUMN district_id INTEGER').run();
+  }
+
+  // User columns migration for 6-tier administrative hierarchy
+  const userCols = db.prepare('PRAGMA table_info(users)').all().map(c => c.name);
+  if (!userCols.includes('assigned_state')) {
+    db.prepare('ALTER TABLE users ADD COLUMN assigned_state TEXT').run();
+  }
+  if (!userCols.includes('assigned_district')) {
+    db.prepare('ALTER TABLE users ADD COLUMN assigned_district TEXT').run();
+  }
+  if (!userCols.includes('assigned_local_body')) {
+    db.prepare('ALTER TABLE users ADD COLUMN assigned_local_body TEXT').run();
+  }
+  if (!userCols.includes('assigned_local_body_id')) {
+    db.prepare('ALTER TABLE users ADD COLUMN assigned_local_body_id INTEGER').run();
+  }
+  if (!userCols.includes('assigned_department_id')) {
+    db.prepare('ALTER TABLE users ADD COLUMN assigned_department_id INTEGER').run();
+  }
+  if (!userCols.includes('is_active')) {
+    db.prepare('ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1').run();
+  }
+  if (!userCols.includes('local_body_type')) {
+    db.prepare('ALTER TABLE users ADD COLUMN local_body_type TEXT').run();
+  }
+  if (!userCols.includes('ward_village')) {
+    db.prepare('ALTER TABLE users ADD COLUMN ward_village TEXT').run();
+  }
+  if (!userCols.includes('address')) {
+    db.prepare('ALTER TABLE users ADD COLUMN address TEXT').run();
+  }
+
+  // Department columns migration
+  const deptCols = db.prepare('PRAGMA table_info(departments)').all().map(c => c.name);
+  if (!deptCols.includes('is_active')) {
+    db.prepare('ALTER TABLE departments ADD COLUMN is_active INTEGER DEFAULT 1').run();
+  }
 
   // Tag initial demo records so they are clearly distinguished from real user complaints
   db.prepare(`
@@ -234,6 +350,72 @@ try {
   `).run();
 } catch (e) {
   // Column may already exist or concurrent access
+}
+
+// Migrate users table CHECK constraint to support 6 administrative tiers if needed
+try {
+  let needsRoleMigration = false;
+  try {
+    db.transaction(() => {
+      db.prepare(`
+        INSERT INTO users (name, email, mobile, password_hash, role, state, district)
+        VALUES ('__test__', '__test__@test.local', '0000000000', 'hash', 'STATE_ADMIN', 'Rajasthan', 'Kota')
+      `).run();
+      throw new Error('ROLLBACK_TEST');
+    })();
+  } catch (err) {
+    if (err.message.includes('CHECK constraint failed')) {
+      needsRoleMigration = true;
+    }
+  }
+
+  if (needsRoleMigration) {
+    db.pragma('foreign_keys = OFF');
+    db.exec(`
+      CREATE TABLE users_v2 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL COLLATE NOCASE,
+        mobile TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'CITIZEN' CHECK (role IN ('CITIZEN', 'ADMIN', 'NATIONAL_SUPER_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'LOCAL_BODY_ADMIN', 'DEPARTMENT_ADMIN', 'FIELD_OFFICER')),
+        state TEXT NOT NULL,
+        district TEXT NOT NULL,
+        avatar_url TEXT,
+        assigned_state TEXT,
+        assigned_district TEXT,
+        assigned_local_body TEXT,
+        assigned_local_body_id INTEGER,
+        assigned_department_id INTEGER,
+        is_active INTEGER DEFAULT 1,
+        local_body_type TEXT,
+        ward_village TEXT,
+        address TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      INSERT INTO users_v2 (
+        id, name, email, mobile, password_hash, role, state, district, avatar_url,
+        assigned_state, assigned_district, assigned_local_body, assigned_local_body_id,
+        assigned_department_id, is_active, local_body_type, ward_village, address,
+        created_at, updated_at
+      )
+      SELECT
+        id, name, email, mobile, password_hash, role, state, district, avatar_url,
+        assigned_state, assigned_district, assigned_local_body, assigned_local_body_id,
+        assigned_department_id, is_active, local_body_type, ward_village, address,
+        created_at, updated_at
+      FROM users;
+
+      DROP TABLE users;
+      ALTER TABLE users_v2 RENAME TO users;
+    `);
+    db.pragma('foreign_keys = ON');
+    console.log('Migrated users table CHECK constraint for 6 administrative tiers successfully.');
+  }
+} catch (migErr) {
+  console.error('Users role migration notice:', migErr.message);
 }
 
 // Lightweight migration: add REJECTED to status CHECK constraint if not present.

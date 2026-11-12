@@ -1,25 +1,82 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const db = require('../db');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken, requireRole, ADMIN_ROLES } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { evaluateSla, calculateSlaDeadline } = require('../utils/slaEngine');
 const { detectRecurringIssues } = require('../utils/recurringDetector');
 const { createNotification } = require('../utils/notifications');
+const { INDIA_GEO_DATA, getLocalBodiesForDistrict } = require('../utils/indiaGeoData');
 
-// Enforce ADMIN role for all routes in this router
+// Enforce administrative role for all routes in this router
 router.use(authenticateToken, requireRole('ADMIN'));
 
 /**
+ * Helper: Scope query filters by user administrative jurisdiction
+ */
+function applyJurisdictionScope(user, whereClauses, params) {
+  if (!user) return;
+  // National Super Admin / ADMIN has universal access
+  if (user.role === 'ADMIN' || user.role === 'NATIONAL_SUPER_ADMIN') {
+    return;
+  }
+  if (user.role === 'STATE_ADMIN') {
+    const state = user.assigned_state || user.state;
+    if (state && state !== 'All India') {
+      whereClauses.push('LOWER(c.state) = LOWER(?)');
+      params.push(state.trim());
+    }
+  } else if (user.role === 'DISTRICT_ADMIN') {
+    const state = user.assigned_state || user.state;
+    const district = user.assigned_district || user.district;
+    if (state && state !== 'All India') {
+      whereClauses.push('LOWER(c.state) = LOWER(?)');
+      params.push(state.trim());
+    }
+    if (district) {
+      whereClauses.push('LOWER(c.district) = LOWER(?)');
+      params.push(district.trim());
+    }
+  } else if (user.role === 'LOCAL_BODY_ADMIN') {
+    if (user.assigned_local_body) {
+      whereClauses.push('(LOWER(c.local_body) = LOWER(?) OR LOWER(c.city) = LOWER(?) OR LOWER(c.address) LIKE LOWER(?))');
+      params.push(user.assigned_local_body.trim(), user.assigned_local_body.trim(), `%${user.assigned_local_body.trim()}%`);
+    } else if (user.assigned_district || user.district) {
+      whereClauses.push('LOWER(c.district) = LOWER(?)');
+      params.push((user.assigned_district || user.district).trim());
+    }
+  } else if (user.role === 'DEPARTMENT_ADMIN') {
+    if (user.assigned_department_id) {
+      whereClauses.push('c.department_id = ?');
+      params.push(user.assigned_department_id);
+    }
+    if (user.assigned_district || user.district) {
+      whereClauses.push('LOWER(c.district) = LOWER(?)');
+      params.push((user.assigned_district || user.district).trim());
+    }
+  } else if (user.role === 'FIELD_OFFICER') {
+    whereClauses.push('(c.assigned_officer_id = ? OR (c.assigned_officer_id IS NULL AND c.department_id = ?))');
+    params.push(user.id, user.assigned_department_id || 0);
+  }
+}
+
+/**
  * GET /api/admin/dashboard
- * Aggregates live statistical data from actual database records
+ * Aggregates live statistical data from actual database records scoped by jurisdiction
  */
 router.get('/dashboard', (req, res) => {
   try {
+    const whereClauses = [];
+    const params = [];
+    applyJurisdictionScope(req.user, whereClauses, params);
+    const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
     const allComplaints = db.prepare(`
       SELECT c.id, c.status, c.priority, c.sla_deadline, c.created_at, c.resolved_at
       FROM complaints c
-    `).all();
+      ${whereSql}
+    `).all(...params);
 
     let total = allComplaints.length;
     let submitted = 0;
@@ -47,9 +104,10 @@ router.get('/dashboard', (req, res) => {
     }
 
     const totalCitizens = db.prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'CITIZEN'").get().count;
-    const totalDepartments = db.prepare('SELECT COUNT(*) AS count FROM departments').get().count;
+    const totalDepartments = db.prepare('SELECT COUNT(*) AS count FROM departments WHERE is_active = 1').get().count;
+    const totalOfficers = db.prepare("SELECT COUNT(*) AS count FROM users WHERE role IN ('FIELD_OFFICER', 'DEPARTMENT_ADMIN') AND is_active = 1").get().count;
 
-    // Recent complaints
+    // Recent complaints scoped by jurisdiction
     const recentComplaints = db.prepare(`
       SELECT c.id, c.complaint_code, c.title, c.district, c.status, c.priority, c.created_at,
              cat.name AS category_name,
@@ -57,9 +115,10 @@ router.get('/dashboard', (req, res) => {
       FROM complaints c
       JOIN categories cat ON c.category_id = cat.id
       JOIN users u ON c.citizen_id = u.id
+      ${whereSql}
       ORDER BY c.created_at DESC
       LIMIT 8
-    `).all();
+    `).all(...params);
 
     // Recent admin activity logs
     const activityLogs = db.prepare(`
@@ -70,8 +129,15 @@ router.get('/dashboard', (req, res) => {
       LIMIT 10
     `).all();
 
+    const jurisdictionLabel = req.user.assigned_local_body ||
+      (req.user.assigned_district ? `${req.user.assigned_district} District` : null) ||
+      (req.user.assigned_state ? `${req.user.assigned_state} State` : null) ||
+      'National (Pan-India)';
+
     return res.json({
       success: true,
+      jurisdiction: jurisdictionLabel,
+      userRole: req.user.role,
       stats: {
         total,
         pending: submitted + underReview,
@@ -84,6 +150,7 @@ router.get('/dashboard', (req, res) => {
         overdueCount,
         totalCitizens,
         totalDepartments,
+        totalOfficers,
       },
       recentComplaints: recentComplaints.map(c => ({
         ...c,
@@ -179,6 +246,9 @@ router.get('/complaints', (req, res) => {
       params.push(pattern, pattern, pattern, pattern, pattern);
     }
 
+    // Apply role-based jurisdiction filter
+    applyJurisdictionScope(req.user, whereClauses, params);
+
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
     const query = `
@@ -186,11 +256,13 @@ router.get('/complaints', (req, res) => {
              cat.name AS category_name, cat.icon AS category_icon,
              d.name AS department_name,
              u.name AS citizen_name, u.email AS citizen_email, u.mobile AS citizen_mobile,
+             off.name AS assigned_officer_name,
              (SELECT COUNT(*) FROM complaint_images WHERE complaint_id = c.id) AS image_count
       FROM complaints c
       JOIN categories cat ON c.category_id = cat.id
       JOIN users u ON c.citizen_id = u.id
       LEFT JOIN departments d ON c.department_id = d.id
+      LEFT JOIN users off ON c.assigned_officer_id = off.id
       ${whereSql}
       ORDER BY 
         CASE c.priority 
@@ -580,12 +652,18 @@ router.put('/departments/:id', (req, res) => {
  */
 router.get('/recurring-issues', (req, res) => {
   try {
+    const whereClauses = [];
+    const params = [];
+    applyJurisdictionScope(req.user, whereClauses, params);
+    const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
     const complaints = db.prepare(`
       SELECT c.*, cat.name AS category_name
       FROM complaints c
       JOIN categories cat ON c.category_id = cat.id
+      ${whereSql}
       ORDER BY c.created_at DESC
-    `).all();
+    `).all(...params);
 
     const hotspots = detectRecurringIssues(complaints);
 
@@ -657,6 +735,8 @@ router.get('/analytics', (req, res) => {
       whereClauses.push("c.status = ?");
       params.push(status);
     }
+
+    applyJurisdictionScope(req.user, whereClauses, params);
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
@@ -936,6 +1016,441 @@ router.get('/verifications', (req, res) => {
   } catch (err) {
     console.error('Verifications fetch error:', err);
     return res.status(500).json({ success: false, message: 'Could not fetch verifications.' });
+  }
+});
+
+/**
+ * PATCH /api/admin/complaints/:id/assign-officer
+ * Assign a specific field officer to an issue
+ */
+router.patch('/complaints/:id/assign-officer', (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { officer_id, notes } = req.body;
+
+    if (!officer_id) {
+      return res.status(400).json({ success: false, message: 'Field Officer ID is required.' });
+    }
+
+    const complaint = db.prepare('SELECT * FROM complaints WHERE id = ?').get(id);
+    if (!complaint) {
+      return res.status(404).json({ success: false, message: 'Complaint not found.' });
+    }
+
+    const officer = db.prepare('SELECT id, name, email, role, is_active, assigned_department_id FROM users WHERE id = ?').get(officer_id);
+    if (!officer) {
+      return res.status(404).json({ success: false, message: 'Designated field officer not found.' });
+    }
+    if (officer.is_active === 0) {
+      return res.status(400).json({ success: false, message: 'Cannot assign deactivated officer.' });
+    }
+
+    db.transaction(() => {
+      const newStatus = ['SUBMITTED', 'UNDER_REVIEW'].includes(complaint.status) ? 'ASSIGNED' : complaint.status;
+
+      db.prepare(`
+        UPDATE complaints
+        SET assigned_officer_id = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(officer.id, newStatus, id);
+
+      db.prepare(`
+        INSERT INTO officer_assignments (complaint_id, officer_id, assigned_by_id, notes, status)
+        VALUES (?, ?, ?, ?, 'ASSIGNED')
+      `).run(id, officer.id, req.user.id, notes || `Assigned by ${req.user.name}`);
+
+      db.prepare(`
+        INSERT INTO complaint_status_history (complaint_id, previous_status, new_status, changed_by_user_id, remarks)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(id, complaint.status, newStatus, req.user.id, `Field officer assigned: ${officer.name}. ${notes || ''}`.trim());
+
+      db.prepare(`
+        INSERT INTO admin_activity_logs (admin_id, action, target_type, target_id, details)
+        VALUES (?, 'ASSIGN_OFFICER', 'COMPLAINT', ?, ?)
+      `).run(req.user.id, id, `Assigned to field officer ${officer.name} (${officer.email})`);
+
+      // Notify citizen
+      createNotification({
+        userId: complaint.citizen_id,
+        title: 'Field Officer Assigned',
+        message: `Field Officer ${officer.name} has been assigned to inspect and resolve your complaint (${complaint.complaint_code}).`,
+        type: 'ASSIGNMENT',
+        complaintId: id,
+      });
+
+      // Notify assigned officer
+      createNotification({
+        userId: officer.id,
+        title: 'New Complaint Assignment',
+        message: `You have been assigned to handle complaint ${complaint.complaint_code}: ${complaint.title}.`,
+        type: 'ASSIGNMENT',
+        complaintId: id,
+      });
+    })();
+
+    return res.json({
+      success: true,
+      message: `Complaint assigned to officer ${officer.name} successfully.`,
+      officer: { id: officer.id, name: officer.name },
+    });
+  } catch (err) {
+    console.error('Officer assignment error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to assign officer.' });
+  }
+});
+
+/**
+ * GET /api/admin/officers
+ * List field officers eligible for task assignment
+ */
+router.get('/officers', (req, res) => {
+  try {
+    const { department_id, district } = req.query;
+    const whereClauses = ["u.role IN ('FIELD_OFFICER', 'DEPARTMENT_ADMIN')", "u.is_active = 1"];
+    const params = [];
+
+    if (department_id) {
+      whereClauses.push('(u.assigned_department_id = ? OR u.assigned_department_id IS NULL)');
+      params.push(department_id);
+    }
+    if (district) {
+      whereClauses.push('(LOWER(u.assigned_district) = LOWER(?) OR u.assigned_district IS NULL)');
+      params.push(district.trim());
+    }
+
+    const officers = db.prepare(`
+      SELECT u.id, u.name, u.email, u.mobile, u.role, u.assigned_state, u.assigned_district,
+             u.assigned_local_body, u.assigned_department_id,
+             d.name AS department_name,
+             (SELECT COUNT(*) FROM complaints WHERE assigned_officer_id = u.id AND status NOT IN ('RESOLVED', 'CLOSED')) AS active_tasks
+      FROM users u
+      LEFT JOIN departments d ON u.assigned_department_id = d.id
+      WHERE ${whereClauses.join(' AND ')}
+      ORDER BY u.name ASC
+    `).all(...params);
+
+    return res.json({ success: true, officers });
+  } catch (err) {
+    console.error('Fetch officers error:', err);
+    return res.status(500).json({ success: false, message: 'Could not fetch officers.' });
+  }
+});
+
+/**
+ * GET /api/admin/users
+ * List administrative staff across 6 tiers
+ */
+router.get('/users', (req, res) => {
+  try {
+    const { role, is_active, search } = req.query;
+    const whereClauses = ["u.role != 'CITIZEN'"];
+    const params = [];
+
+    if (role) {
+      whereClauses.push('u.role = ?');
+      params.push(role);
+    }
+    if (is_active !== undefined) {
+      whereClauses.push('u.is_active = ?');
+      params.push(is_active === 'true' || is_active === '1' ? 1 : 0);
+    }
+    if (search) {
+      whereClauses.push('(u.name LIKE ? OR u.email LIKE ? OR u.mobile LIKE ? OR u.assigned_district LIKE ?)');
+      const p = `%${search.trim()}%`;
+      params.push(p, p, p, p);
+    }
+
+    const users = db.prepare(`
+      SELECT u.id, u.name, u.email, u.mobile, u.role, u.is_active,
+             u.state, u.district, u.assigned_state, u.assigned_district,
+             u.assigned_local_body, u.assigned_department_id, u.created_at,
+             d.name AS department_name,
+             (SELECT COUNT(*) FROM complaints WHERE assigned_officer_id = u.id) AS assigned_complaints_count
+      FROM users u
+      LEFT JOIN departments d ON u.assigned_department_id = d.id
+      WHERE ${whereClauses.join(' AND ')}
+      ORDER BY u.created_at DESC
+    `).all(...params);
+
+    return res.json({ success: true, users });
+  } catch (err) {
+    console.error('Admin users fetch error:', err);
+    return res.status(500).json({ success: false, message: 'Could not fetch staff accounts.' });
+  }
+});
+
+/**
+ * POST /api/admin/users
+ * Create a new officer or administrator
+ */
+router.post('/users', async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      mobile,
+      password,
+      role,
+      assigned_state,
+      assigned_district,
+      assigned_local_body,
+      assigned_department_id,
+    } = req.body;
+
+    if (!name || !email || !mobile || !password || !role) {
+      return res.status(400).json({ success: false, message: 'Name, email, mobile, password, and role are required.' });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const cleanedMobile = mobile.trim().replace(/^(\+91|0)/, '');
+
+    const validRoles = [
+      'ADMIN',
+      'NATIONAL_SUPER_ADMIN',
+      'STATE_ADMIN',
+      'DISTRICT_ADMIN',
+      'LOCAL_BODY_ADMIN',
+      'DEPARTMENT_ADMIN',
+      'FIELD_OFFICER',
+    ];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ success: false, message: `Invalid administrative role: ${role}` });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long.' });
+    }
+
+    const existingEmail = db.prepare('SELECT id FROM users WHERE email = ?').get(trimmedEmail);
+    if (existingEmail) {
+      return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
+    }
+
+    const existingMobile = db.prepare('SELECT id FROM users WHERE mobile = ?').get(cleanedMobile);
+    if (existingMobile) {
+      return res.status(409).json({ success: false, message: 'An account with this mobile number already exists.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    const stateVal = assigned_state || req.user.assigned_state || req.user.state || 'All India';
+    const distVal = assigned_district || req.user.assigned_district || req.user.district || 'Unassigned';
+
+    const insertStmt = db.prepare(`
+      INSERT INTO users (
+        name, email, mobile, password_hash, role, state, district,
+        assigned_state, assigned_district, assigned_local_body, assigned_department_id, is_active
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+    `);
+
+    const result = insertStmt.run(
+      name.trim(),
+      trimmedEmail,
+      cleanedMobile,
+      passwordHash,
+      role,
+      stateVal,
+      distVal,
+      assigned_state || null,
+      assigned_district || null,
+      assigned_local_body || null,
+      assigned_department_id || null
+    );
+
+    db.prepare(`
+      INSERT INTO admin_activity_logs (admin_id, action, target_type, target_id, details)
+      VALUES (?, 'CREATE_USER', 'USER', ?, ?)
+    `).run(req.user.id, result.lastInsertRowid, `Created ${role} account: ${name.trim()} (${trimmedEmail})`);
+
+    return res.status(201).json({
+      success: true,
+      message: `Staff member ${name} created successfully with role ${role}.`,
+      userId: result.lastInsertRowid,
+    });
+  } catch (err) {
+    console.error('Create staff error:', err);
+    return res.status(500).json({ success: false, message: 'Could not create staff member.' });
+  }
+});
+
+/**
+ * PATCH /api/admin/users/:id/status
+ * Activate or deactivate staff member
+ */
+router.patch('/users/:id/status', (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { is_active } = req.body;
+
+    if (id === req.user.id) {
+      return res.status(400).json({ success: false, message: 'You cannot deactivate your own account.' });
+    }
+
+    const targetUser = db.prepare('SELECT id, name, role FROM users WHERE id = ?').get(id);
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const activeStatus = is_active === true || is_active === 1 ? 1 : 0;
+    db.prepare('UPDATE users SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(activeStatus, id);
+
+    db.prepare(`
+      INSERT INTO admin_activity_logs (admin_id, action, target_type, target_id, details)
+      VALUES (?, 'TOGGLE_STATUS', 'USER', ?, ?)
+    `).run(req.user.id, id, `Changed active status to ${activeStatus} for ${targetUser.name} (${targetUser.role})`);
+
+    return res.json({
+      success: true,
+      message: `Account status updated to ${activeStatus === 1 ? 'Active' : 'Deactivated'} successfully.`,
+      is_active: activeStatus,
+    });
+  } catch (err) {
+    console.error('User status error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to update user status.' });
+  }
+});
+
+/**
+ * GET /api/admin/geo/states
+ */
+router.get('/geo/states', (req, res) => {
+  try {
+    const states = db.prepare('SELECT id, code, name, type FROM states ORDER BY name ASC').all();
+    return res.json({ success: true, states });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Could not fetch states.' });
+  }
+});
+
+/**
+ * GET /api/admin/geo/districts
+ */
+router.get('/geo/districts', (req, res) => {
+  try {
+    const { state_name, state_id } = req.query;
+    let query = 'SELECT id, state_id, state_name, name FROM districts';
+    const params = [];
+    if (state_name) {
+      query += ' WHERE LOWER(state_name) = LOWER(?)';
+      params.push(state_name.trim());
+    } else if (state_id) {
+      query += ' WHERE state_id = ?';
+      params.push(state_id);
+    }
+    query += ' ORDER BY name ASC';
+    const districts = db.prepare(query).all(...params);
+    return res.json({ success: true, districts });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Could not fetch districts.' });
+  }
+});
+
+/**
+ * GET /api/admin/geo/local-bodies
+ */
+router.get('/geo/local-bodies', (req, res) => {
+  try {
+    const { district_name, state_name } = req.query;
+    let query = 'SELECT * FROM local_bodies';
+    const params = [];
+    if (district_name) {
+      query += ' WHERE LOWER(district_name) = LOWER(?)';
+      params.push(district_name.trim());
+    }
+    query += ' ORDER BY name ASC';
+    let bodies = db.prepare(query).all(...params);
+
+    if (bodies.length === 0 && district_name) {
+      const generated = getLocalBodiesForDistrict(district_name, state_name);
+      return res.json({ success: true, localBodies: generated });
+    }
+
+    return res.json({ success: true, localBodies: bodies });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Could not fetch local bodies.' });
+  }
+});
+
+/**
+ * POST /api/admin/geo/local-bodies
+ */
+router.post('/geo/local-bodies', (req, res) => {
+  try {
+    const { state_name, district_name, name, body_type, pin_code_prefix } = req.body;
+    if (!state_name || !district_name || !name || !body_type) {
+      return res.status(400).json({ success: false, message: 'State, district, name, and body type are required.' });
+    }
+
+    const dist = db.prepare('SELECT id FROM districts WHERE LOWER(name) = LOWER(?) AND LOWER(state_name) = LOWER(?)').get(district_name.trim(), state_name.trim());
+    const distId = dist ? dist.id : null;
+
+    const existing = db.prepare('SELECT id FROM local_bodies WHERE LOWER(name) = LOWER(?) AND LOWER(district_name) = LOWER(?)').get(name.trim(), district_name.trim());
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'Local body already registered in this district.' });
+    }
+
+    const result = db.prepare(`
+      INSERT INTO local_bodies (district_id, state_name, district_name, name, body_type, pin_code_prefix)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(distId, state_name.trim(), district_name.trim(), name.trim(), body_type, pin_code_prefix || null);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Local body registered successfully.',
+      localBodyId: result.lastInsertRowid,
+    });
+  } catch (err) {
+    console.error('Create local body error:', err);
+    return res.status(500).json({ success: false, message: 'Could not register local body.' });
+  }
+});
+
+/**
+ * GET /api/admin/audit-logs
+ * System-wide administrator action audit trail
+ */
+router.get('/audit-logs', (req, res) => {
+  try {
+    const { limit = 50, page = 1, action, target_type } = req.query;
+    const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const whereClauses = [];
+    const params = [];
+
+    if (action) {
+      whereClauses.push('l.action = ?');
+      params.push(action);
+    }
+    if (target_type) {
+      whereClauses.push('l.target_type = ?');
+      params.push(target_type);
+    }
+
+    const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    const logs = db.prepare(`
+      SELECT l.*, u.name AS admin_name, u.email AS admin_email, u.role AS admin_role
+      FROM admin_activity_logs l
+      JOIN users u ON l.admin_id = u.id
+      ${whereSql}
+      ORDER BY l.created_at DESC
+      LIMIT ? OFFSET ?
+    `).all(...params, parseInt(limit, 10), offset);
+
+    const total = db.prepare(`
+      SELECT COUNT(*) AS count FROM admin_activity_logs l ${whereSql}
+    `).get(...params).count;
+
+    return res.json({
+      success: true,
+      total,
+      page: parseInt(page, 10),
+      totalPages: Math.ceil(total / parseInt(limit, 10)),
+      logs,
+    });
+  } catch (err) {
+    console.error('Audit logs error:', err);
+    return res.status(500).json({ success: false, message: 'Could not fetch audit logs.' });
   }
 });
 

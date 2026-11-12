@@ -209,8 +209,15 @@ export default function AdminPortalLayout({ currentPath = '/admin/dashboard', on
                   {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
                 </div>
                 <div className="hidden md:block text-left">
-                  <p className="text-xs font-bold text-white leading-tight truncate max-w-[130px]">{user?.name}</p>
-                  <p className="text-[10px] text-slate-300 uppercase tracking-wider font-semibold">Municipal Admin</p>
+                  <p className="text-xs font-bold text-white leading-tight truncate max-w-[140px]">{user?.name}</p>
+                  <p className="text-[10px] text-[#D6A64F] uppercase tracking-wider font-bold">
+                    {user?.role === 'STATE_ADMIN' && 'State Admin'}
+                    {user?.role === 'DISTRICT_ADMIN' && 'District Admin'}
+                    {user?.role === 'LOCAL_BODY_ADMIN' && 'Municipal Admin'}
+                    {user?.role === 'DEPARTMENT_ADMIN' && 'Dept Head'}
+                    {user?.role === 'FIELD_OFFICER' && 'Field Officer'}
+                    {(user?.role === 'ADMIN' || user?.role === 'NATIONAL_SUPER_ADMIN') && 'Super Admin'}
+                  </p>
                 </div>
               </div>
 

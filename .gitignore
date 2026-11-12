@@ -43,3 +43,6 @@ ehthumbs.db
 *.tmp
 *.bak
 *.orig
+
+# Temporary backup files (never commit)
+server/backups_temp/

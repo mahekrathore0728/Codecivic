@@ -1,8 +1,9 @@
 const bcrypt = require('bcryptjs');
 const db = require('./db');
+const { INDIA_GEO_DATA, getLocalBodiesForDistrict } = require('./utils/indiaGeoData');
 
 async function seedDatabase() {
-  console.log('Seeding CodeCivic database for Kota, Rajasthan...');
+  console.log('Seeding CodeCivic database for Pan-India Civic Governance...');
 
   // 1. Seed Municipal Departments
   const departments = [
@@ -24,7 +25,7 @@ async function seedDatabase() {
     },
     {
       name: 'Water Supply Board',
-      description: 'Chambal drinking water trunk lines, consumer pipeline leaks, booster pumps, and water quality testing.',
+      description: 'Drinking water distribution, consumer pipeline leaks, booster pumps, and water quality testing.',
       contact_email: 'water.kota@codecivic.gov.in',
       contact_phone: '0744-2501003',
       head_officer: 'Sunita Rao (Executive Engineer)',
@@ -46,36 +47,138 @@ async function seedDatabase() {
       head_officer: 'Pradeep Joshi (Chief Electrical Inspector)',
       sla_hours_default: 48,
     },
+    {
+      name: 'Horticulture & Parks Department',
+      description: 'Public parks, community green spaces, roadside tree pruning, and garden maintenance.',
+      contact_email: 'horticulture.kota@codecivic.gov.in',
+      contact_phone: '0744-2501006',
+      head_officer: 'Dr. Manoj Tiwari (Director of Horticulture)',
+      sla_hours_default: 96,
+    },
+    {
+      name: 'General Infrastructure Department',
+      description: 'Public buildings, civic complexes, transit shelters, foot-over bridges, and heritage structures.',
+      contact_email: 'infra.kota@codecivic.gov.in',
+      contact_phone: '0744-2501007',
+      head_officer: 'Er. Vivek Saxena (Chief Project Engineer)',
+      sla_hours_default: 72,
+    },
+    {
+      name: 'Public Safety & Town Planning',
+      description: 'Encroachment removal, traffic hazard mitigation, structural stability, and safety barricading.',
+      contact_email: 'safety.kota@codecivic.gov.in',
+      contact_phone: '0744-2501008',
+      head_officer: 'D. C. Rathore (Town Planning Officer)',
+      sla_hours_default: 24,
+    },
   ];
-
-  const insertDept = db.prepare(`
-    INSERT OR REPLACE INTO departments (id, name, description, contact_email, contact_phone, head_officer, sla_hours_default)
-    VALUES (
-      COALESCE((SELECT id FROM departments WHERE name = ?), NULL),
-      ?, ?, ?, ?, ?, ?
-    )
-  `);
 
   for (const d of departments) {
     const existing = db.prepare('SELECT id FROM departments WHERE name = ?').get(d.name);
     if (!existing) {
       db.prepare(`
-        INSERT INTO departments (name, description, contact_email, contact_phone, head_officer, sla_hours_default)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO departments (name, description, contact_email, contact_phone, head_officer, sla_hours_default, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, 1)
       `).run(d.name, d.description, d.contact_email, d.contact_phone, d.head_officer, d.sla_hours_default);
     }
   }
 
-  // 2. Seed Standard Categories
+  // 2. Seed Standard Categories (12 Part-4 Categories + legacy compatibility)
   const deptMap = {};
   db.prepare('SELECT id, name FROM departments').all().forEach((d) => {
     deptMap[d.name] = d.id;
   });
 
   const categories = [
+    // 12 Standard Part-4 Categories
+    {
+      name: 'Roads and Potholes',
+      description: 'Hazardous road craters, asphalt damage, broken pavements, and divider issues.',
+      icon: 'Construction',
+      default_priority: 'HIGH',
+      dept: 'Road Infrastructure Department',
+    },
+    {
+      name: 'Water Supply',
+      description: 'Pipeline ruptures, drinking water contamination, low pressure, and booster pump faults.',
+      icon: 'Droplets',
+      default_priority: 'CRITICAL',
+      dept: 'Water Supply Board',
+    },
+    {
+      name: 'Drainage and Sewage',
+      description: 'Choked storm drains, overflowing sewer manholes, stagnant foul water, and missing covers.',
+      icon: 'Waves',
+      default_priority: 'HIGH',
+      dept: 'Drainage & Stormwater Department',
+    },
+    {
+      name: 'Garbage Management',
+      description: 'Accumulated roadside garbage, overflowing public dumpsters, illegal dumping, or lack of sweeping.',
+      icon: 'Trash2',
+      default_priority: 'MEDIUM',
+      dept: 'Sanitation Department',
+    },
+    {
+      name: 'Electricity Infrastructure',
+      description: 'Low-hanging power lines, exposed transformers, loose distribution cables, and meter boxes.',
+      icon: 'Zap',
+      default_priority: 'HIGH',
+      dept: 'Electrical & Lighting Department',
+    },
+    {
+      name: 'Street Lights',
+      description: 'Non-functional streetlights, blinking LED luminaires, dark transit stretches, and timer faults.',
+      icon: 'Lightbulb',
+      default_priority: 'MEDIUM',
+      dept: 'Electrical & Lighting Department',
+    },
+    {
+      name: 'Public Sanitation',
+      description: 'Unsanitary public convenience complexes, open urination hotspots, and market foul odors.',
+      icon: 'Sparkles',
+      default_priority: 'MEDIUM',
+      dept: 'Sanitation Department',
+    },
+    {
+      name: 'Public Parks',
+      description: 'Overgrown vegetation, broken playground equipment, dry fountains, and damaged park fencing.',
+      icon: 'Trees',
+      default_priority: 'LOW',
+      dept: 'Horticulture & Parks Department',
+    },
+    {
+      name: 'Public Infrastructure',
+      description: 'Damaged bus shelters, broken pedestrian railings, cracked foot-over bridges, and civic assets.',
+      icon: 'Building2',
+      default_priority: 'MEDIUM',
+      dept: 'General Infrastructure Department',
+    },
+    {
+      name: 'Government Facilities',
+      description: 'Maintenance issues in government dispensaries, municipal schools, citizen centers, and offices.',
+      icon: 'Landmark',
+      default_priority: 'MEDIUM',
+      dept: 'General Infrastructure Department',
+    },
+    {
+      name: 'Public Safety Infrastructure',
+      description: 'Dangerous road encroachments, uncovered open pits, missing guardrails, and structural hazards.',
+      icon: 'ShieldAlert',
+      default_priority: 'HIGH',
+      dept: 'Public Safety & Town Planning',
+    },
+    {
+      name: 'Other Civic Issues',
+      description: 'Encroachments, fallen tree boughs, loose hanging cables, or stray animal traffic hazards.',
+      icon: 'HelpCircle',
+      default_priority: 'LOW',
+      dept: 'Sanitation Department',
+    },
+    // Legacy categories preserved for backward compatibility
     {
       name: 'Garbage and Waste',
-      description: 'Accumulated roadside garbage, overflowing public dumpsters, illegal dumping, or lack of sweeping.',
+      description: 'Accumulated roadside garbage and overflowing public dumpsters.',
       icon: 'Trash2',
       default_priority: 'MEDIUM',
       dept: 'Sanitation Department',
@@ -96,38 +199,24 @@ async function seedDatabase() {
     },
     {
       name: 'Water Leakage',
-      description: 'Burst distribution mains, leaking consumer joints, drinking water loss, or low pipeline pressure.',
+      description: 'Burst distribution mains, leaking consumer joints, drinking water loss, or low pressure.',
       icon: 'Droplets',
       default_priority: 'CRITICAL',
       dept: 'Water Supply Board',
     },
     {
       name: 'Drainage Problems',
-      description: 'Choked storm drains, overflowing sewer manholes, stagnant foul water, or missing manhole covers.',
+      description: 'Choked storm drains, overflowing sewer manholes, and missing covers.',
       icon: 'Waves',
       default_priority: 'HIGH',
       dept: 'Drainage & Stormwater Department',
     },
     {
       name: 'Streetlight Issues',
-      description: 'Non-functional streetlights, blinking LED luminaires, open feeder pillars, or dark transit stretches.',
+      description: 'Non-functional streetlights and open feeder pillars.',
       icon: 'Lightbulb',
       default_priority: 'MEDIUM',
       dept: 'Electrical & Lighting Department',
-    },
-    {
-      name: 'Public Sanitation',
-      description: 'Unsanitary public convenience complexes, open urination hotspots, or foul odors near markets.',
-      icon: 'Sparkles',
-      default_priority: 'MEDIUM',
-      dept: 'Sanitation Department',
-    },
-    {
-      name: 'Other Civic Issues',
-      description: 'Encroachments, fallen tree boughs, loose hanging cables, or stray cattle traffic hazards.',
-      icon: 'HelpCircle',
-      default_priority: 'LOW',
-      dept: 'Sanitation Department',
     },
   ];
 
@@ -141,49 +230,196 @@ async function seedDatabase() {
     }
   }
 
-  // 3. Seed Demo Users with Guaranteed Passwords & Kota, Rajasthan Jurisdiction
+  // 3. Seed Geographic Tables (States, Districts, Sample Local Bodies)
+  const STATE_CODE_MAP = {
+    'Andhra Pradesh': 'AP', 'Arunachal Pradesh': 'AR', 'Assam': 'AS', 'Bihar': 'BR',
+    'Chhattisgarh': 'CG', 'Goa': 'GA', 'Gujarat': 'GJ', 'Haryana': 'HR',
+    'Himachal Pradesh': 'HP', 'Jharkhand': 'JH', 'Karnataka': 'KA', 'Kerala': 'KL',
+    'Madhya Pradesh': 'MP', 'Maharashtra': 'MH', 'Manipur': 'MN', 'Meghalaya': 'ML',
+    'Mizoram': 'MZ', 'Nagaland': 'NL', 'Odisha': 'OD', 'Punjab': 'PB',
+    'Rajasthan': 'RJ', 'Sikkim': 'SK', 'Tamil Nadu': 'TN', 'Telangana': 'TG',
+    'Tripura': 'TR', 'Uttar Pradesh': 'UP', 'Uttarakhand': 'UK', 'West Bengal': 'WB',
+    'Andaman and Nicobar Islands': 'AN', 'Chandigarh': 'CH',
+    'Dadra and Nagar Haveli and Daman and Diu': 'DH', 'Delhi': 'DL',
+    'Jammu and Kashmir': 'JK', 'Ladakh': 'LA', 'Lakshadweep': 'LD', 'Puducherry': 'PY'
+  };
+
+  const insertState = db.prepare('INSERT OR IGNORE INTO states (code, name, type) VALUES (?, ?, ?)');
+  const insertDist = db.prepare('INSERT OR IGNORE INTO districts (state_id, state_name, name) VALUES (?, ?, ?)');
+
+  INDIA_GEO_DATA.forEach((item, idx) => {
+    const code = STATE_CODE_MAP[item.state] || `IN-${idx + 1}`;
+    const type = item.type === 'Union Territory' ? 'UT' : 'STATE';
+    insertState.run(code, item.state, type);
+    const stateRow = db.prepare('SELECT id FROM states WHERE name = ? COLLATE NOCASE').get(item.state);
+    if (stateRow) {
+      for (const dist of item.districts) {
+        insertDist.run(stateRow.id, item.state, dist);
+      }
+    }
+  });
+
+  // Seed sample local bodies for Kota
+  const kotaDist = db.prepare("SELECT d.id AS dist_id, s.id AS state_id FROM districts d JOIN states s ON d.state_id = s.id WHERE d.name = 'Kota'").get();
+  if (kotaDist) {
+    const existingLb = db.prepare("SELECT id FROM local_bodies WHERE name = 'Kota Municipal Corporation'").get();
+    if (!existingLb) {
+      db.prepare(`
+        INSERT INTO local_bodies (district_id, state_name, district_name, name, body_type)
+        VALUES (?, 'Rajasthan', 'Kota', 'Kota Municipal Corporation', 'MUNICIPAL_CORPORATION')
+      `).run(kotaDist.dist_id);
+    }
+  }
+
+  // 4. Seed 6-Tier Administrative and Citizen Accounts
   const salt = await bcrypt.genSalt(10);
   const adminHash = await bcrypt.hash('Admin@CodeCivic2026', salt);
   const citizenHash = await bcrypt.hash('Citizen@123', salt);
 
-  const upsertUser = (name, email, mobile, hash, role, state, district) => {
+  const upsertUser = ({
+    name,
+    email,
+    mobile,
+    hash,
+    role,
+    state,
+    district,
+    assigned_state = null,
+    assigned_district = null,
+    assigned_local_body = null,
+    assigned_department_id = null,
+  }) => {
     const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
     if (existing) {
-      // SAFE UPSERT: Only insert reference fields that are missing.
-      // NEVER overwrite password_hash — a returning citizen may have changed their password.
-      // Only update non-sensitive identity fields (name, role, state, district) if they haven't
-      // been personalised, and ensure the mobile number column is not colliding.
-      // For demo accounts, we do update name/role/state/district so they stay canonical,
-      // but we deliberately preserve any password change made by a human operator.
       db.prepare(`
         UPDATE users
-        SET name = ?, role = ?, state = ?, district = ?, updated_at = CURRENT_TIMESTAMP
+        SET name = ?, role = ?, state = ?, district = ?,
+            assigned_state = ?, assigned_district = ?, assigned_local_body = ?,
+            assigned_department_id = ?, is_active = 1, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
-      `).run(name, role, state, district, existing.id);
+      `).run(name, role, state, district, assigned_state, assigned_district, assigned_local_body, assigned_department_id, existing.id);
       return existing.id;
     } else {
       const info = db.prepare(`
-        INSERT INTO users (name, email, mobile, password_hash, role, state, district)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).run(name, email, mobile, hash, role, state, district);
+        INSERT INTO users (
+          name, email, mobile, password_hash, role, state, district,
+          assigned_state, assigned_district, assigned_local_body, assigned_department_id, is_active
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+      `).run(
+        name, email, mobile, hash, role, state, district,
+        assigned_state, assigned_district, assigned_local_body, assigned_department_id
+      );
       return info.lastInsertRowid;
     }
   };
 
-  const adminId = upsertUser('Kota Municipal Commissioner', 'admin@codecivic.gov.in', '9810012345', adminHash, 'ADMIN', 'Rajasthan', 'Kota');
-  const rameshId = upsertUser('Ramesh Kumar', 'ramesh.citizen@codecivic.gov.in', '9820054321', citizenHash, 'CITIZEN', 'Rajasthan', 'Kota');
-  const priyaId = upsertUser('Priya Sharma', 'priya.sharma@codecivic.gov.in', '9830098765', citizenHash, 'CITIZEN', 'Rajasthan', 'Kota');
+  const roadsDeptId = deptMap['Road Infrastructure Department'];
 
-  // 4. Seed 11 Realistic, Unique Complaints in Kota, Rajasthan with Sequential IDs CC-2026-00001 ... CC-2026-00011
+  // Tier 1: National Super Admin (Universal Pan-India access)
+  const adminId = upsertUser({
+    name: 'National Administrative Authority',
+    email: 'admin@codecivic.gov.in',
+    mobile: '9810012345',
+    hash: adminHash,
+    role: 'ADMIN',
+    state: 'All India',
+    district: 'National Capital Territory',
+  });
+
+  // Tier 2: State Admin (State-level jurisdiction)
+  upsertUser({
+    name: 'Rajasthan State Directorate',
+    email: 'state.rajasthan@codecivic.gov.in',
+    mobile: '9810023456',
+    hash: adminHash,
+    role: 'STATE_ADMIN',
+    state: 'Rajasthan',
+    district: 'Jaipur',
+    assigned_state: 'Rajasthan',
+  });
+
+  // Tier 3: District Admin (District-level jurisdiction)
+  upsertUser({
+    name: 'Kota District Magistrate Office',
+    email: 'district.kota@codecivic.gov.in',
+    mobile: '9810034567',
+    hash: adminHash,
+    role: 'DISTRICT_ADMIN',
+    state: 'Rajasthan',
+    district: 'Kota',
+    assigned_state: 'Rajasthan',
+    assigned_district: 'Kota',
+  });
+
+  // Tier 4: Local Body Admin (Urban Local Body jurisdiction)
+  upsertUser({
+    name: 'Kota Municipal Commissioner',
+    email: 'local.kota@codecivic.gov.in',
+    mobile: '9810045678',
+    hash: adminHash,
+    role: 'LOCAL_BODY_ADMIN',
+    state: 'Rajasthan',
+    district: 'Kota',
+    assigned_state: 'Rajasthan',
+    assigned_district: 'Kota',
+    assigned_local_body: 'Kota Municipal Corporation',
+  });
+
+  // Tier 5: Department Admin (Departmental supervisory authority)
+  upsertUser({
+    name: 'Roads Executive Engineer',
+    email: 'dept.roads@codecivic.gov.in',
+    mobile: '9810056789',
+    hash: adminHash,
+    role: 'DEPARTMENT_ADMIN',
+    state: 'Rajasthan',
+    district: 'Kota',
+    assigned_state: 'Rajasthan',
+    assigned_district: 'Kota',
+    assigned_department_id: roadsDeptId,
+  });
+
+  // Tier 6: Field Officer (Field execution & resolution)
+  const officerVermaId = upsertUser({
+    name: 'Er. S. K. Verma (Roads Officer)',
+    email: 'officer.verma@codecivic.gov.in',
+    mobile: '9810067890',
+    hash: adminHash,
+    role: 'FIELD_OFFICER',
+    state: 'Rajasthan',
+    district: 'Kota',
+    assigned_state: 'Rajasthan',
+    assigned_district: 'Kota',
+    assigned_department_id: roadsDeptId,
+  });
+
+  // Citizens
+  const rameshId = upsertUser({
+    name: 'Ramesh Kumar',
+    email: 'ramesh.citizen@codecivic.gov.in',
+    mobile: '9820054321',
+    hash: citizenHash,
+    role: 'CITIZEN',
+    state: 'Rajasthan',
+    district: 'Kota',
+  });
+
+  const priyaId = upsertUser({
+    name: 'Priya Sharma',
+    email: 'priya.sharma@codecivic.gov.in',
+    mobile: '9830098765',
+    hash: citizenHash,
+    role: 'CITIZEN',
+    state: 'Rajasthan',
+    district: 'Kota',
+  });
+
+  // 5. Seed 11 Realistic, Unique Complaints in Kota, Rajasthan (CC-2026-00001 ... CC-2026-00011)
   const catMap = {};
   db.prepare('SELECT id, name FROM categories').all().forEach((c) => {
     catMap[c.name] = c.id;
   });
 
-  // Clear existing demo complaints if resetting or if complaints are below 11
-  const currentCount = db.prepare('SELECT COUNT(*) AS count FROM complaints').get().count;
-
-  // We check if the 11 sequential demo complaints exist. If not, seed them.
   const sampleComplaints = [
     {
       code: 'CC-2026-00001',
@@ -204,6 +440,7 @@ async function seedDatabase() {
       support_count: 28,
       is_escalated: 0,
       days_ago: 3,
+      assigned_officer_id: officerVermaId,
     },
     {
       code: 'CC-2026-00002',
@@ -285,7 +522,7 @@ async function seedDatabase() {
       lng: 75.8267,
       priority: 'MEDIUM',
       status: 'UNDER_REVIEW',
-      sla_hours_remaining: -14, // Overdue by 14h
+      sla_hours_remaining: -14,
       support_count: 15,
       is_escalated: 1,
       escalation_reason: 'Unlit transit corridor for 5 consecutive nights with no response from electrical field depot.',
@@ -350,6 +587,7 @@ async function seedDatabase() {
       support_count: 31,
       is_escalated: 0,
       days_ago: 2,
+      assigned_officer_id: officerVermaId,
     },
     {
       code: 'CC-2026-00009',
@@ -416,7 +654,6 @@ async function seedDatabase() {
     },
   ];
 
-  // Upsert sample complaints
   for (const c of sampleComplaints) {
     const existing = db.prepare('SELECT id FROM complaints WHERE complaint_code = ?').get(c.code);
     const catId = catMap[c.category];
@@ -434,25 +671,26 @@ async function seedDatabase() {
         SET title = ?, description = ?, address = ?, landmark = ?, district = ?, state = ?,
             latitude = ?, longitude = ?, priority = ?, status = ?, sla_deadline = ?,
             support_count = ?, is_escalated = ?, escalation_reason = ?, reopen_count = ?,
-            category_id = ?, department_id = ?, citizen_id = ?
+            category_id = ?, department_id = ?, citizen_id = ?, assigned_officer_id = ?,
+            local_body = 'Kota Municipal Corporation', local_body_type = 'MUNICIPAL_CORPORATION'
         WHERE id = ?
       `).run(
         c.title, c.description, c.address, c.landmark, c.district, c.state,
         c.lat, c.lng, c.priority, c.status, slaDeadline,
         c.support_count, c.is_escalated, c.escalation_reason || null, c.reopen_count || 0,
-        catId, deptId, c.citizen_id, existing.id
+        catId, deptId, c.citizen_id, c.assigned_officer_id || null, existing.id
       );
       complaintId = existing.id;
     } else {
       const info = db.prepare(`
         INSERT INTO complaints (
-          complaint_code, citizen_id, category_id, department_id,
-          title, description, address, landmark, district, state,
+          complaint_code, citizen_id, category_id, department_id, assigned_officer_id,
+          title, description, address, landmark, district, state, local_body, local_body_type,
           latitude, longitude, priority, status, sla_deadline,
           support_count, is_escalated, escalation_reason, reopen_count, created_at, resolved_at, closed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Kota Municipal Corporation', 'MUNICIPAL_CORPORATION', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
-        c.code, c.citizen_id, catId, deptId,
+        c.code, c.citizen_id, catId, deptId, c.assigned_officer_id || null,
         c.title, c.description, c.address, c.landmark, c.district, c.state,
         c.lat, c.lng, c.priority, c.status, slaDeadline,
         c.support_count, c.is_escalated, c.escalation_reason || null, c.reopen_count || 0,
@@ -501,8 +739,8 @@ async function seedDatabase() {
 
   console.log('Seeding completed successfully!');
   console.log('----------------------------------------------------');
-  console.log('Demo accounts seeded. See README for access instructions.');
-  console.log('Location Focus:     Kota, Rajasthan');
+  console.log('6 Administrative Tiers + Citizen Accounts seeded.');
+  console.log('Pan-India Geographic Hierarchy initialized.');
   console.log('Sequential IDs:     CC-2026-00001 through CC-2026-00011');
   console.log('----------------------------------------------------');
 }

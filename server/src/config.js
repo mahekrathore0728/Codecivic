@@ -47,10 +47,17 @@ module.exports = {
 
   // Hackathon demo & evaluator settings
   ENABLE_DEMO_CREDENTIALS: process.env.ENABLE_DEMO_CREDENTIALS === 'true' || !isProduction,
-  EVALUATOR_KEY: process.env.EVALUATOR_KEY || null,
+  EVALUATOR_KEY: process.env.EVALUATOR_KEY || (isProduction ? null : 'codecivic-evaluator-2026'),
   SMTP_CONFIGURED: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER),
 
   // Rate limiting config
   AUTH_RATE_LIMIT_MAX: parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) || 20,
   API_RATE_LIMIT_MAX: parseInt(process.env.API_RATE_LIMIT_MAX, 10) || 300,
+
+  // Temporary live backup system configuration (disabled by default)
+  BACKUP_ENABLED: process.env.BACKUP_ENABLED === 'true',
+  BACKUP_SECRET: process.env.BACKUP_SECRET || null,
+  BACKUP_TEMP_DIR: process.env.BACKUP_TEMP_DIR || path.join(__dirname, '..', 'backups_temp'),
+  MAX_BACKUP_SIZE_MB: parseInt(process.env.MAX_BACKUP_SIZE_MB, 10) || 200,
+  BACKUP_EXPIRY_SECONDS: parseInt(process.env.BACKUP_EXPIRY_SECONDS, 10) || 600,
 };

@@ -2,6 +2,16 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
+const ADMIN_ROLES = [
+  'ADMIN',
+  'NATIONAL_SUPER_ADMIN',
+  'STATE_ADMIN',
+  'DISTRICT_ADMIN',
+  'LOCAL_BODY_ADMIN',
+  'DEPARTMENT_ADMIN',
+  'FIELD_OFFICER',
+];
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('codecivic_token') || null);
@@ -96,6 +106,8 @@ export const AuthProvider = ({ children }) => {
     return fetch(url, { ...options, headers });
   };
 
+  const isAdmin = Boolean(user && ADMIN_ROLES.includes(user.role));
+
   return (
     <AuthContext.Provider
       value={{
@@ -103,7 +115,14 @@ export const AuthProvider = ({ children }) => {
         token,
         loading,
         isAuthenticated: Boolean(user),
-        isAdmin: user?.role === 'ADMIN',
+        isAdmin,
+        isSuperAdmin: user?.role === 'ADMIN' || user?.role === 'NATIONAL_SUPER_ADMIN',
+        isStateAdmin: user?.role === 'STATE_ADMIN',
+        isDistrictAdmin: user?.role === 'DISTRICT_ADMIN',
+        isLocalAdmin: user?.role === 'LOCAL_BODY_ADMIN',
+        isDeptAdmin: user?.role === 'DEPARTMENT_ADMIN',
+        isFieldOfficer: user?.role === 'FIELD_OFFICER',
+        role: user?.role || 'GUEST',
         login,
         register,
         logout,

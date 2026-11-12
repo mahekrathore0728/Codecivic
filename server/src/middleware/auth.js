@@ -2,8 +2,18 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const db = require('../db');
 
+const ADMIN_ROLES = [
+  'ADMIN',
+  'NATIONAL_SUPER_ADMIN',
+  'STATE_ADMIN',
+  'DISTRICT_ADMIN',
+  'LOCAL_BODY_ADMIN',
+  'DEPARTMENT_ADMIN',
+  'FIELD_OFFICER',
+];
+
 /**
- * Middleware: Verify JWT and attach user object
+ * Middleware: Verify JWT and attach full user profile
  */
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -18,12 +28,25 @@ function authenticateToken(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, config.JWT_SECRET);
-    const user = db.prepare('SELECT id, name, email, mobile, role, state, district FROM users WHERE id = ?').get(decoded.id);
+    const user = db.prepare(`
+      SELECT id, name, email, mobile, role, state, district,
+             assigned_state, assigned_district, assigned_local_body,
+             assigned_local_body_id, assigned_department_id, is_active,
+             local_body_type, ward_village, address
+      FROM users WHERE id = ?
+    `).get(decoded.id);
 
     if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Account not found or session has expired.',
+      });
+    }
+
+    if (user.is_active === 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'Account has been deactivated. Please contact your administrative authority.',
       });
     }
 
@@ -57,8 +80,14 @@ function optionalAuth(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, config.JWT_SECRET);
-    const user = db.prepare('SELECT id, name, email, mobile, role, state, district FROM users WHERE id = ?').get(decoded.id);
-    req.user = user || null;
+    const user = db.prepare(`
+      SELECT id, name, email, mobile, role, state, district,
+             assigned_state, assigned_district, assigned_local_body,
+             assigned_local_body_id, assigned_department_id, is_active,
+             local_body_type, ward_village, address
+      FROM users WHERE id = ?
+    `).get(decoded.id);
+    req.user = user && user.is_active !== 0 ? user : null;
   } catch {
     req.user = null;
   }
@@ -67,7 +96,8 @@ function optionalAuth(req, res, next) {
 
 /**
  * Middleware: Role-Based Access Control
- * @param {string|string[]} roles Allowed roles, e.g. 'ADMIN' or ['ADMIN']
+ * Supports single or multiple roles, with 'ADMIN' covering any administrative tier.
+ * @param {string|string[]} roles Allowed roles, e.g. 'ADMIN' or ['ADMIN', 'CITIZEN']
  */
 function requireRole(...roles) {
   return (req, res, next) => {
@@ -78,14 +108,27 @@ function requireRole(...roles) {
       });
     }
 
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied: You do not have permission to perform this administrative action.',
-      });
+    const userRole = req.user.role;
+
+    // Direct match
+    if (roles.includes(userRole)) {
+      return next();
     }
 
-    next();
+    // If 'ADMIN' is among required roles, any administrative tier qualifies
+    if (roles.includes('ADMIN') && ADMIN_ROLES.includes(userRole)) {
+      return next();
+    }
+
+    // National Super Admin has universal access to all admin functions
+    if (userRole === 'NATIONAL_SUPER_ADMIN' || userRole === 'ADMIN') {
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied: You do not have permission to perform this administrative action.',
+    });
   };
 }
 
@@ -93,4 +136,5 @@ module.exports = {
   authenticateToken,
   optionalAuth,
   requireRole,
+  ADMIN_ROLES,
 };

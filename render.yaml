@@ -35,3 +35,10 @@ services:
         value: /tmp/codecivic.db
       - key: UPLOAD_DIR
         value: /tmp/uploads
+      # Live Backup System (Owner Only - disabled by default)
+      - key: BACKUP_ENABLED
+        value: "false"  # Set to "true" in Render dashboard only when taking a live backup
+      - key: BACKUP_SECRET
+        sync: false     # Set securely in Render dashboard — never commit this
+      - key: BACKUP_TEMP_DIR
+        value: /tmp/backups

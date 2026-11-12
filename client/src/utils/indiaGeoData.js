@@ -420,3 +420,41 @@ export const isValidIndianState = (stateName) => {
     (entry) => entry.state.toLowerCase() === stateName.trim().toLowerCase()
   );
 };
+
+export const LOCAL_BODY_TYPES = [
+  { id: 'MUNICIPAL_CORPORATION', label: 'Municipal Corporation (Nagar Nigam)', category: 'URBAN' },
+  { id: 'MUNICIPAL_COUNCIL', label: 'Municipal Council (Nagar Parishad)', category: 'URBAN' },
+  { id: 'MUNICIPALITY', label: 'Municipality (Nagar Palika)', category: 'URBAN' },
+  { id: 'NAGAR_PANCHAYAT', label: 'Town Panchayat (Nagar Panchayat)', category: 'SEMI_URBAN' },
+  { id: 'GRAM_PANCHAYAT', label: 'Gram Panchayat (Village Council)', category: 'RURAL' },
+];
+
+export const getLocalBodiesForDistrict = (districtName, stateName) => {
+  if (!districtName) return [];
+  const cleanDistrict = districtName.trim();
+  return [
+    { id: 'corp', name: `${cleanDistrict} Municipal Corporation`, type: 'MUNICIPAL_CORPORATION' },
+    { id: 'council', name: `${cleanDistrict} Municipal Council`, type: 'MUNICIPAL_COUNCIL' },
+    { id: 'palika', name: `${cleanDistrict} Town Municipality`, type: 'MUNICIPALITY' },
+    { id: 'nagar_panchayat', name: `${cleanDistrict} Nagar Panchayat`, type: 'NAGAR_PANCHAYAT' },
+    { id: 'gram_panchayat_1', name: `${cleanDistrict} North Gram Panchayat`, type: 'GRAM_PANCHAYAT' },
+    { id: 'gram_panchayat_2', name: `${cleanDistrict} Rural Gram Panchayat`, type: 'GRAM_PANCHAYAT' },
+  ];
+};
+
+export const getWardsOrVillages = (localBodyName, isRural = false) => {
+  if (isRural) {
+    return [
+      'Central Village (Khas)',
+      'East Hamlet (Tola)',
+      'West Habitation (Basti)',
+      'Panchayat Ward 1',
+      'Panchayat Ward 2',
+      'Panchayat Ward 3',
+      'Panchayat Ward 4',
+      'Panchayat Ward 5',
+    ];
+  }
+  // Urban wards
+  return Array.from({ length: 40 }, (_, i) => `Ward ${i + 1}`);
+};

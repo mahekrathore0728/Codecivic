@@ -24,17 +24,32 @@ import {
   ThumbsUp,
   ExternalLink,
   Wand2,
+  Zap,
+  Trees,
+  Building2,
+  Landmark,
+  ShieldAlert,
 } from 'lucide-react';
 
 const CATEGORY_ICONS = {
+  'Roads and Potholes': Construction,
+  'Water Supply': Droplets,
+  'Drainage and Sewage': Waves,
+  'Garbage Management': Trash2,
+  'Electricity Infrastructure': Zap,
+  'Street Lights': Lightbulb,
+  'Public Sanitation': Sparkles,
+  'Public Parks': Trees,
+  'Public Infrastructure': Building2,
+  'Government Facilities': Landmark,
+  'Public Safety Infrastructure': ShieldAlert,
+  'Other Civic Issues': HelpCircle,
   'Garbage and Waste': Trash2,
   'Road Damage': Construction,
   'Potholes': AlertTriangle,
   'Water Leakage': Droplets,
   'Drainage Problems': Waves,
   'Streetlight Issues': Lightbulb,
-  'Public Sanitation': Sparkles,
-  'Other Civic Issues': HelpCircle,
 };
 
 export default function ReportIssuePage({ onNavigate, onOpenAuth }) {

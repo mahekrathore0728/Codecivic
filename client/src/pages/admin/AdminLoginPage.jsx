@@ -43,7 +43,8 @@ export default function AdminLoginPage({ onNavigate }) {
 
     try {
       const loggedInUser = await login(email.trim(), password);
-      if (loggedInUser.role !== 'ADMIN') {
+      const ADMIN_ROLES = ['ADMIN', 'NATIONAL_SUPER_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'LOCAL_BODY_ADMIN', 'DEPARTMENT_ADMIN', 'FIELD_OFFICER'];
+      if (!ADMIN_ROLES.includes(loggedInUser.role)) {
         setError('Access Denied: This account does not possess municipal administrator privileges.');
         return;
       }

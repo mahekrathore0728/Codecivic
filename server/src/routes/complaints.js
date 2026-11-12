@@ -139,6 +139,10 @@ router.post('/', authenticateToken, upload.array('photos', 5), validateUploadedF
       ward,
       location_source,
       related_complaint_id,
+      local_body,
+      local_body_id,
+      local_body_type,
+      ward_village,
     } = req.body;
 
     // Validation
@@ -227,8 +231,9 @@ router.post('/', authenticateToken, upload.array('photos', 5), validateUploadedF
           complaint_code, citizen_id, category_id, department_id,
           title, description, address, landmark, district, state,
           latitude, longitude, priority, status, sla_deadline, ward,
-          pincode, locality, city, location_source, is_demo
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED', ?, ?, ?, ?, ?, ?, 0)
+          pincode, locality, city, location_source, local_body, local_body_id,
+          local_body_type, ward_village, is_demo
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
       `);
 
       const result = insertStmt.run(
@@ -250,7 +255,11 @@ router.post('/', authenticateToken, upload.array('photos', 5), validateUploadedF
         pincode ? pincode.trim().slice(0, 6) : null,
         locality ? sanitize(locality.trim()) : null,
         city ? sanitize(city.trim()) : null,
-        safeLocationSource
+        safeLocationSource,
+        local_body ? sanitize(local_body.trim()) : null,
+        local_body_id ? parseInt(local_body_id, 10) : null,
+        local_body_type ? sanitize(local_body_type.trim()) : null,
+        ward_village ? sanitize(ward_village.trim()) : (ward ? ward.trim() : null)
       );
 
       const complaintId = result.lastInsertRowid;

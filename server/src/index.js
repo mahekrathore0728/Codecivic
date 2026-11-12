@@ -12,6 +12,7 @@ const authRoutes = require('./routes/auth');
 const complaintRoutes = require('./routes/complaints');
 const adminRoutes = require('./routes/admin');
 const notificationRoutes = require('./routes/notifications');
+const ownerBackupRoutes = require('./routes/ownerBackup');
 
 const app = express();
 
@@ -93,6 +94,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/owner/backup', ownerBackupRoutes);
 
 /**
  * Public Civic Transparency Endpoint (Phase 6)

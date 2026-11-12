@@ -17,7 +17,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, mobile, password, confirmPassword, state, district } = req.body;
+    const { name, email, mobile, password, confirmPassword, state, district, local_body_type, local_body, ward_village, address } = req.body;
 
     // Field presence validation
     if (!name || !email || !mobile || !password || !confirmPassword || !state || !district) {
@@ -84,11 +84,24 @@ router.post('/register', async (req, res) => {
 
     // Insert citizen (Role is strictly CITIZEN - public registration never grants admin access)
     const insertStmt = db.prepare(`
-      INSERT INTO users (name, email, mobile, password_hash, role, state, district)
-      VALUES (?, ?, ?, ?, 'CITIZEN', ?, ?)
+      INSERT INTO users (
+        name, email, mobile, password_hash, role, state, district,
+        local_body_type, assigned_local_body, ward_village, address, is_active
+      ) VALUES (?, ?, ?, ?, 'CITIZEN', ?, ?, ?, ?, ?, ?, 1)
     `);
 
-    const result = insertStmt.run(name.trim(), trimmedEmail, cleanedMobile, passwordHash, state.trim(), district.trim());
+    const result = insertStmt.run(
+      name.trim(),
+      trimmedEmail,
+      cleanedMobile,
+      passwordHash,
+      state.trim(),
+      district.trim(),
+      local_body_type ? local_body_type.trim() : null,
+      local_body ? local_body.trim() : null,
+      ward_village ? ward_village.trim() : null,
+      address ? address.trim() : null
+    );
     const userId = result.lastInsertRowid;
 
     // Generate JWT token
@@ -104,6 +117,10 @@ router.post('/register', async (req, res) => {
       role: 'CITIZEN',
       state: state.trim(),
       district: district.trim(),
+      local_body_type: local_body_type ? local_body_type.trim() : null,
+      local_body: local_body ? local_body.trim() : null,
+      ward_village: ward_village ? ward_village.trim() : null,
+      address: address ? address.trim() : null,
     };
 
     return res.status(201).json({
@@ -138,7 +155,10 @@ router.post('/login', async (req, res) => {
 
     const trimmedEmail = email.trim().toLowerCase();
     const user = db.prepare(`
-      SELECT id, name, email, mobile, password_hash, role, state, district
+      SELECT id, name, email, mobile, password_hash, role, state, district,
+             assigned_state, assigned_district, assigned_local_body,
+             assigned_local_body_id, assigned_department_id, is_active,
+             local_body_type, ward_village, address
       FROM users WHERE email = ?
     `).get(trimmedEmail);
 
@@ -146,6 +166,13 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({
         success: false,
         message: 'Invalid email address or password.',
+      });
+    }
+
+    if (user.is_active === 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact your administrative authority.',
       });
     }
 
@@ -171,6 +198,14 @@ router.post('/login', async (req, res) => {
       role: user.role,
       state: user.state,
       district: user.district,
+      assigned_state: user.assigned_state,
+      assigned_district: user.assigned_district,
+      assigned_local_body: user.assigned_local_body,
+      assigned_local_body_id: user.assigned_local_body_id,
+      assigned_department_id: user.assigned_department_id,
+      local_body_type: user.local_body_type,
+      ward_village: user.ward_village,
+      address: user.address,
     };
 
     return res.json({

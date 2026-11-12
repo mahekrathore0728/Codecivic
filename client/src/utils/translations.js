@@ -80,9 +80,9 @@ export const translations = {
 
     // Home Page
     home: {
-      heroBadge: 'Official Civic Grievance & Public Works Portal',
-      heroTitle: 'Crowdsourced Civic Issue Reporting & Evidence-Based Resolution',
-      heroDescription: 'CodeCivic connects residents of Kota directly with municipal engineers. Report damaged roads, overflowing garbage, drainage blocks, and dark streetlights with GPS and photographic evidence. Track department action in real time and inspect repair proof before officially confirming resolution.',
+      heroBadge: 'Official Pan-India Civic Governance Portal',
+      heroTitle: 'One Nation. One Civic Platform. Better Communities.',
+      heroDescription: 'CodeCivic connects citizens across all 28 States and 8 Union Territories directly with their respective municipal authorities and Panchayati Raj institutions. Report damaged roads, overflowing waste, water supply ruptures, and public safety issues with GPS and photographic evidence. Track department resolution in real time and inspect repair proof before officially confirming resolution.',
       reportBtn: 'Report an Issue',
       exploreBtn: 'Explore Public Issues',
       trackLabel: 'Track Existing Civic Complaint',
@@ -264,9 +264,9 @@ export const translations = {
 
     // Home Page
     home: {
-      heroBadge: 'आधिकारिक नागरिक शिकायत निवारण एवं लोक निर्माण पोर्टल',
-      heroTitle: 'नागरिक भागीदारी आधारित समस्या समाधान एवं साक्ष्य-युक्त सत्यापन',
-      heroDescription: 'कोडसिविक कोटा के नागरिकों को सीधे नगर निगम अभियंताओं से जोड़ता है। क्षतिग्रस्त सड़कें, कचरे के ढेर, अवरुद्ध नालियां और बंद स्ट्रीटलाइट्स की तस्वीरें और जीपीएस लोकेशन के साथ रिपोर्ट करें। समाधान प्रक्रिया को रीयल-टाइम में ट्रैक करें और मरम्मत का साक्ष्य देखकर ही संतुष्टि की पुष्टि करें।',
+      heroBadge: 'आधिकारिक अखिल भारतीय नागरिक शासन पोर्टल',
+      heroTitle: 'एक राष्ट्र। एक नागरिक मंच। बेहतर समुदाय।',
+      heroDescription: 'कोडसिविक भारत के सभी 28 राज्यों और 8 केंद्र शासित प्रदेशों के नागरिकों को उनके नगर निगमों और पंचायती राज संस्थाओं से सीधे जोड़ता है। जीपीएस और फोटो प्रमाण के साथ टूटी सड़कें, कचरा, जलापूर्ति और सार्वजनिक सुरक्षा समस्याओं की शिकायत दर्ज करें। रीयल-टाइम में समाधान ट्रैक करें और सत्यापन के बाद ही केस बंद करें।',
       reportBtn: 'समस्या दर्ज करें',
       exploreBtn: 'नागरिक समस्याएं देखें',
       trackLabel: 'शिकायत की स्थिति जांचें',
